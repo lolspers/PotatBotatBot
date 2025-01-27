@@ -1,0 +1,18 @@
+{
+    "username": "",
+    "userId": "",
+    "channelId": "",
+    "twitchToken": "",
+    "clientId": "",
+    "refreshToken": "",
+    "clientSecret": "",
+    "potatToken": "",
+    "usePotatApi": false,
+    "farmingCommands": {
+        "potato": true,
+        "steal": true,
+        "trample": false,
+        "cdr": true,
+        "quiz": false
+    }
+}
