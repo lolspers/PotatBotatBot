@@ -45,9 +45,10 @@ def refreshToken():
         raise stopBot(f"Failed to refresh token: {response.json()}")
     
     data = response.json()
-    config["twitchToken"] = data["access_token"]
     global twitchToken
     twitchToken = data["access_token"]
+    config["twitchToken"] = twitchToken
+    twitchHeaders["Authorization"] = f"Bearer {twitchToken}"
     config["refreshToken"] = data["refresh_token"]
 
     updateConfig(config)

@@ -7,14 +7,13 @@ Make sure you have [python](https://www.python.org/downloads/) (at least 3.12) a
 pip install requests
 ```
 
-Make (or use an existing) [application](https://dev.twitch.tv/console/apps) and set Client Type to Confidential
-
 Clone the repository in a terminal like powershell
 ```bash
 git clone https://github.com/lolspers/PotatBotatbot
 ```
 
-Open `setup.py` and follow the steps, this will set the config for you
+Make (or use an existing) [application](https://dev.twitch.tv/console/apps) and set Client Type to Confidential
+Open `setup.py` and follow the steps, this will set the config for you, or edit config.json manually if you know what you're doing
 
 To start the bot simply open `main.py`
 Any errors should get logged in `logs.txt`

@@ -78,7 +78,7 @@ while True:
 
 
         if executedCommand:
-            sleep(1) # let the db update
+            executions += 1
             potatoData = api.getPotatoData()
 
             potatoes = potatoData["potatoes"]
@@ -109,6 +109,7 @@ while True:
             executedCommand = True
             if cooldown != "quiz":
                 print(api.send(cooldown))
+                sleep(1)
                 continue
 
             quiz = api.potatSend("#quiz")
