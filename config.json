@@ -14,5 +14,11 @@
         "trample": false,
         "cdr": true,
         "quiz": false
+    },
+    "shopItems": {
+        "shop-fertilizer": true,
+        "shop-guard": true,
+        "shop-cdr": true,
+        "shop-quiz": false
     }
 }

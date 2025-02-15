@@ -1,5 +1,5 @@
 import api
-from config import loopDelay, rankupCosts, executedCommand, executions, allFarmingCommands
+from config import loopDelay, rankupCosts, executedCommand, boughtShopItem, executions, allFarmingCommands, allShopItems
 from time import time, sleep, strftime
 from traceback import format_exc
 import json
@@ -29,6 +29,12 @@ def inputs():
             api.farmingCommands = config["farmingCommands"]
             updateConfig(config)
             print(f"Toggled command '{uInput}', set to {config["farmingCommands"][uInput]}")
+
+        elif uInput in allShopItems:
+            config["shopItems"][uInput] = bool(config["shopItems"][uInput] is False)
+            api.shopItems = config["shopItems"]
+            updateConfig(config)
+            print(f"Toggled auto buying for '{uInput}', set to {config["shopItems"][uInput]}")
 
         elif "twitch" in uInput:
             api.usePotatApi = False
@@ -60,11 +66,19 @@ print("'potat': Change to potatbotat api")
 print("'twitch': Change to twitch api")
 for command in allFarmingCommands:
     print(f"'{command}': Toggle auto farming for {command}")
+for item in allShopItems:
+    print(f"'{item}': Toggle auto buying from the shop for {item.split("shop-", 1)[1]}")
 print("'refresh': Refresh potatbotat cooldowns if they are wrong\n")
 print("Manual changes to config requires restart to update\n")
 
 while True:
     try:
+        if executions > 20:
+            api.log("TOO MANY EXECUTIONS")
+            print(f"{strftime("%H:%M:%S")} Errored / executed too many commands in a short period of time, paused for 1h - commands will not work during this time")
+            executions = 0
+            sleep(3600)
+
         if not uInputs.empty():
             uInput = uInputs.get()
             if uInput == "s":
@@ -73,8 +87,17 @@ while True:
             elif uInput in allFarmingCommands:
                 executedCommand = True
 
+            elif uInput in allShopItems:
+                boughtShopItem = True
+
             elif "refresh" in uInput:
                 executedCommand = True
+                boughtShopItem = True
+
+        if boughtShopItem:
+            executions += 2
+            shopCooldowns = api.getShopCooldowns()
+            boughtShopItem = False
 
 
         if executedCommand:
@@ -108,27 +131,47 @@ while True:
             executions += 1
             executedCommand = True
             if cooldown != "quiz":
+                if cooldown == "potato":
+                    if shopCooldowns.get("shop-fertilizer", time()+10) < time():
+                        print(api.send("shop fertilizer"))
+                        sleep(5) # shop cooldown
+                        boughtShopItem = True
+                    if shopCooldowns.get("shop-guard", time()+10) < time():
+                        print(api.send("shop guard"))
+                        sleep(5) # shop cooldown
+                        boughtShopItem = True
+
                 print(api.send(cooldown))
+
+                if cooldown == "cdr":
+                    if shopCooldowns.get("shop-cdr", time()+10) < time():
+                        print(api.send("shop cdr"))
+                        boughtShopItem = True
+
                 sleep(1)
                 continue
 
-            quiz = api.potatSend("#quiz")
-            print(quiz)
-            if not quiz.startswith("Executed command:"):
+            print(api.twitchSend("#quiz")) # first execute the quiz in the targetted twitch chat
+            quiz = api.potatSend("#quiz")  # to not send "🥳 Thats right! Congratulations on getting the right answer, heres # potatoes!" in your own chat
+            if not quiz.startswith("Failed to execute command:"): # it returns quiz as an error
+                log(f"FAILED QUIZ: {quiz}")
                 continue
 
-            quiz = quiz.split("': ", 1)[1].strip()
+            quiz = quiz.split(": ", 2)[2].strip() # seperate the quiz from the rest of the message
+            # Example response:󠀀 ⚠️ You already have an existing quiz in progress! Here is the question in case you forgot: A potato farmer is planting potatoes in rows, and each row contains 20 potatoes. If the farmer has 12 rows, how many potatoes are planted in total? 
+            print(quiz)
             answer = quizes[quiz]
             print(f"{answer=}")
-            sleep(6) # answer has a 5 second cooldown after quiz + 1s margin
-            # force potat api, because commands get executed in your own chat, only way to read quiz
-            print(api.potatSend(f"#a {answer}"))
-            continue
+            sleep(5)
+            print(api.twitchSend(f"{answer}")) # answering with just the answer works and doesn't have a cooldown, but still add a cooldown incase it changes
 
-        if executions > 15:
-            api.log("TOO MANY EXECUTIONS")
-            print(f"{strftime("%H:%M:%S")} Executed too many commands in a short period of time, paused for 1h")
-            sleep(3600)
+            if shopCooldowns.get("shop-quiz", time()+10) < time():
+                print(api.send("shop quiz"))
+                sleep(5) # shop cooldown
+                boughtShopItem = True
+
+            executions += 2
+            continue
 
         executions -= loopDelay/10 if loopDelay < 90 else 0.9
         sleep(loopDelay)
@@ -138,10 +181,12 @@ while True:
         print(f"stopped bot: {e}")
         sleep(3000000)
     except IndexError as e:
+        executions += 1
         log(f"INDEX ERROR : {type(e).__name__} {e}")
         log(format_exc())
         sleep(5)
     except Exception as e:
+        executions += 1
         log(f"EXCEPTION ERROR : {type(e).__name__} {e}")
         log(format_exc())
         sleep(5)

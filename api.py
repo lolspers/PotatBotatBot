@@ -1,6 +1,7 @@
 from config import *
 import requests
 from data import log, getConfig, updateConfig
+from time import time
 
 config = getConfig()
 
@@ -12,6 +13,7 @@ potatToken = config["potatToken"]
 username = config["username"]
 usePotatApi = config["usePotatApi"]
 farmingCommands = config["farmingCommands"]
+shopItems = config["shopItems"]
 
 class stopBot(Exception):
     pass
@@ -60,9 +62,10 @@ def twitchSend(message: str) -> str:
     data = response.json()
     if response.status_code != 200:
         if response.status_code == 401:
-            refreshToken()
             log(f"INVALID TWITCH TOKEN: {response.json()}")
             print("Invalid twitch token")
+            refreshToken()
+            twitchSend(message)
 
         log(f"TWITCH ERROR : {response.json()} {response.status_code}")
         return f"Failed to send twitch message ({response.status_code}): {data["message"]}"
@@ -140,6 +143,37 @@ def getPotatoData() -> dict:
     print(filteredCooldowns)
 
     return {"potatoes": potatoes, "rank": rank, "prestige": prestige, "cooldowns": filteredCooldowns}
+
+def getShopCooldowns() -> dict:
+    potatStatus = potatSend("#status")
+    if not potatStatus.startswith("Executed command"):
+        raise Exception(f"Failed to get quiz cooldowns: {potatStatus}")
+    
+    # Example message :  Potato: 28m and 23s ● Cooldown: ✅ ● Trample: ✅ ● Steal: 1h and 48m ● Eat: 26m and 12s ● Quiz: 41m and 54s ● Shop-Quiz: ✅ ● Shop-Cdr: 15h and 53m ● Shop-Fertilizer: ✅ ● Shop-Guard: ✅
+
+    potatStatus = potatStatus.split(": ", 2)[2].replace("✅", "0s").lower()
+    potatCooldowns = {}
+    unitToSeconds = {"s": 1, "m": 60, "h": 3600, "d": 86400}
+
+    [potatCooldowns.update({cooldown.split(": ", 1)[0]: cooldown.split(": ", 1)[1]}) for cooldown in potatStatus.split(" ● ")]
+
+    shopCooldowns = {}
+    for command in potatCooldowns:
+        if command not in shopItems:
+            continue
+
+        cooldowns = potatCooldowns[command].split(" and ")
+        readyIn = time() # seconds until cooldown is over
+
+        for cooldown in cooldowns:
+            if not "s" in cooldown:
+                readyIn += 60 # add a minute because #status rounds minutes down
+            readyIn += int(cooldown[:-1]) * unitToSeconds[cooldown[-1]]
+
+        shopCooldowns[command] = readyIn
+
+    print(shopCooldowns)
+    return shopCooldowns
 
 def send(message: str):
     message = potatPrefix+message

@@ -81,7 +81,7 @@ if updateTwitch:
             clientId = input("Client ID: ").strip().lower()
 
     print(f"\nGo to https://id.twitch.tv/oauth2/authorize?response_type=code&client_id={clientId}&redirect_uri={redirect}&scope=user:write:chat")
-    print("From the URL bar copy the code after 'code=' and until '&scope' (the unable to connect doesn't matter)")
+    print("From the URL bar copy the code in between 'code=' and '&scope' (the unable to connect doesn't matter)")
 
     code = input("Code: ").strip().lower()
     if len(code) != 30:
