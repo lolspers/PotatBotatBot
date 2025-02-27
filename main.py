@@ -64,10 +64,12 @@ print("Valid commands:")
 print("'s': Stop the bot and close the program")
 print("'potat': Change to potatbotat api")
 print("'twitch': Change to twitch api")
+longestFarmingCommand = len(max(allShopItems, key=len))
 for command in allFarmingCommands:
-    print(f"'{command}': Toggle auto farming for {command}")
+    print(f"{f"'{command}': Toggle auto farming for {command}": <{longestFarmingCommand*2+20}} (Currently set to {config["farmingCommands"][command]})")
+longestShopItem = len(max(allShopItems, key=len))
 for item in allShopItems:
-    print(f"'{item}': Toggle auto buying from the shop for {item.split("shop-", 1)[1]}")
+    print(f"{f"'{item}': Toggle auto buying from the shop for {item.split("shop-", 1)[1]}": <{longestShopItem*2+40}} (Currently set to {config["shopItems"][item]})")
 print("'refresh': Refresh potatbotat cooldowns if they are wrong\n")
 print("Manual changes to config requires restart to update\n")
 
@@ -152,15 +154,17 @@ while True:
                 continue
 
             print(api.twitchSend("#quiz")) # first execute the quiz in the targetted twitch chat
+            sleep(5)
             quiz = api.potatSend("#quiz")  # to not send "🥳 Thats right! Congratulations on getting the right answer, heres # potatoes!" in your own chat
-            if not quiz.startswith("Failed to execute command:"): # it returns quiz as an error
-                log(f"FAILED QUIZ: {quiz}")
-                continue
 
-            quiz = quiz.split(": ", 2)[2].strip() # seperate the quiz from the rest of the message
             # Example response:󠀀 ⚠️ You already have an existing quiz in progress! Here is the question in case you forgot: A potato farmer is planting potatoes in rows, and each row contains 20 potatoes. If the farmer has 12 rows, how many potatoes are planted in total? 
-            print(quiz)
-            answer = quizes[quiz]
+            print(f"{quiz=}")
+            answer = quizes.get(quiz, None)
+            if answer is None:
+                log(f"FAILED QUIZ: {quiz=}")
+                print("FAILED QUIZ")
+                continue
+            
             print(f"{answer=}")
             sleep(5)
             print(api.twitchSend(f"{answer}")) # answering with just the answer works and doesn't have a cooldown, but still add a cooldown incase it changes

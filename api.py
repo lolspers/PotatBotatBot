@@ -53,6 +53,8 @@ def refreshToken():
     twitchHeaders["Authorization"] = f"Bearer {twitchToken}"
     config["refreshToken"] = data["refresh_token"]
 
+    log(f"Refreshed token: {twitchToken}")
+
     updateConfig(config)
 
 def twitchSend(message: str) -> str:
@@ -62,10 +64,9 @@ def twitchSend(message: str) -> str:
     data = response.json()
     if response.status_code != 200:
         if response.status_code == 401:
-            log(f"INVALID TWITCH TOKEN: {response.json()}")
-            print("Invalid twitch token")
-            refreshToken()
-            twitchSend(message)
+            if data["message"] == "Invalid OAuth token":
+                refreshToken()
+                return twitchSend(message)
 
         log(f"TWITCH ERROR : {response.json()} {response.status_code}")
         return f"Failed to send twitch message ({response.status_code}): {data["message"]}"
@@ -93,8 +94,14 @@ def potatSend(message: str) -> str:
 
     error = data["data"].get("error", ", ".join(data["errors"]))
     if error:
+        if "⚠️ You already have an existing quiz in progress! Here is the question in case you forgot: " in error:
+            return error.split("⚠️ You already have an existing quiz in progress! Here is the question in case you forgot: ", 1)[1]
+        
+        if error == "󠀀⚠️ You did not answer your last quiz in time, and it expired... Run the command again to start a new quiz!":
+            return potatSend("#quiz")
+        
         if "❌" not in error:
-            log(f"ERROR : {response.json()}")
+            log(f"POTAT ERROR : {response.json()}")
             return f"Failed to execute command: {error}"
         result = error
     
@@ -107,6 +114,9 @@ def potatSend(message: str) -> str:
     if result.startswith("✋⏰") or "ryanpo1Bwuh ⏰" in result:
         log(f"COOLDOWN : {response.json()}")
         return f"PotatBotat command '{message}' not ready yet: {result}"
+    
+    if " (You have five minutes to answer correctly, time starts now!)" in result:
+        return result.replace(" (You have five minutes to answer correctly, time starts now!)", "")
 
     return f"Executed command: '{message}': {result}"
 
@@ -147,7 +157,7 @@ def getPotatoData() -> dict:
 def getShopCooldowns() -> dict:
     potatStatus = potatSend("#status")
     if not potatStatus.startswith("Executed command"):
-        raise Exception(f"Failed to get quiz cooldowns: {potatStatus}")
+        raise Exception(f"Failed to get shop cooldowns: {potatStatus}")
     
     # Example message :  Potato: 28m and 23s ● Cooldown: ✅ ● Trample: ✅ ● Steal: 1h and 48m ● Eat: 26m and 12s ● Quiz: 41m and 54s ● Shop-Quiz: ✅ ● Shop-Cdr: 15h and 53m ● Shop-Fertilizer: ✅ ● Shop-Guard: ✅
 
@@ -159,7 +169,7 @@ def getShopCooldowns() -> dict:
 
     shopCooldowns = {}
     for command in potatCooldowns:
-        if command not in shopItems:
+        if not shopItems.get(command, False):
             continue
 
         cooldowns = potatCooldowns[command].split(" and ")
