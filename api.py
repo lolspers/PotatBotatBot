@@ -79,7 +79,7 @@ def twitchSend(message: str) -> str:
     return f"Failed to sent twitch message: {dropReason}"
 
 
-def potatSend(message: str) -> str:
+def potatSend(message: str, cooldownSend: bool = True) -> str:
     response = requests.post(potatApi+"execute", headers=potatHeaders, json={"text": message})
     if response.status_code != 200:
         if response.status_code == 418:
@@ -102,6 +102,9 @@ def potatSend(message: str) -> str:
         
         if "❌" not in error:
             log(f"POTAT ERROR : {response.json()}")
+            if error.startswith("Command '") and error.endswith("' currently on cooldown.") and cooldownSend:
+                log(f"Sent message again: {message=} - {error=}")
+                return potatSend(message, False)
             return f"Failed to execute command: {error}"
         result = error
     
@@ -125,7 +128,7 @@ def getPotatoData() -> dict:
     response = requests.get(potatApi+"users/"+username)
     if response.status_code != 200:
         log(f"POTAT DATA ERROR : {response.json()} {response.status_code}")
-        return f"{response.json()} {response.status_code}"
+        raise Exception(f"FAILED TO GET POTAT COOLDOWNS: {response.json()} {response.status_code}")
 
     data = response.json()
     potatoData = data["data"][0]["potatoes"]

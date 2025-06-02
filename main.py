@@ -186,11 +186,13 @@ while True:
         sleep(3000000)
     except IndexError as e:
         executions += 1
+        print(f"ERROR: {e}")
         log(f"INDEX ERROR : {type(e).__name__} {e}")
         log(format_exc())
         sleep(5)
     except Exception as e:
         executions += 1
+        print(f"ERROR: {e}")
         log(f"EXCEPTION ERROR : {type(e).__name__} {e}")
         log(format_exc())
         sleep(5)
