@@ -1,7 +1,7 @@
 from config import *
 import requests
 from data import log, getConfig, updateConfig
-from time import time
+from time import time, sleep
 
 config = getConfig()
 
@@ -103,6 +103,7 @@ def potatSend(message: str, cdRetries: int = 0) -> str:
         if "❌" not in error:
             log(f"POTAT ERROR : {response.json()}")
             if error.startswith("Command '") and error.endswith("' currently on cooldown.") and cdRetries > 0:
+                sleep(1)
                 log(f"Sent message again: {message=} - {error=}")
                 return potatSend(message, cdRetries-1)
             return f"Failed to execute command: {error}"
