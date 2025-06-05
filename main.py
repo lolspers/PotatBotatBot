@@ -155,7 +155,7 @@ while True:
 
             print(api.twitchSend("#quiz")) # first execute the quiz in the targetted twitch chat
             sleep(5)
-            quiz = api.potatSend("#quiz")  # to not send "🥳 Thats right! Congratulations on getting the right answer, heres # potatoes!" in your own chat
+            quiz = api.potatSend("#quiz", cdRetries=3)  # to not send "🥳 Thats right! Congratulations on getting the right answer, heres # potatoes!" in your own chat
 
             # Example response:󠀀 ⚠️ You already have an existing quiz in progress! Here is the question in case you forgot: A potato farmer is planting potatoes in rows, and each row contains 20 potatoes. If the farmer has 12 rows, how many potatoes are planted in total? 
             print(f"{quiz=}")

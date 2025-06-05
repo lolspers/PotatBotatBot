@@ -15,7 +15,7 @@ git clone https://github.com/lolspers/PotatBotatbot
 Make (or use an existing) [application](https://dev.twitch.tv/console/apps) and set Client Type to Confidential.
 If you don't have a website for the redirect URL you can set it to `http://localhost`.
 
-Open `setup.py` and follow the steps, this will set the config for you, or edit config.json manually if you know what you're doing.
+Open `setup.py` and follow the steps, this will set the config for you, or edit example-config.json manually and rename it to config.json if you know what you're doing.
 
 An error can sometimes occur when PotatBotat is not joined in your channel, you can prevent this by adding PotatBotat [here](https://potat.app/).
 

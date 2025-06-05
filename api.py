@@ -79,7 +79,7 @@ def twitchSend(message: str) -> str:
     return f"Failed to sent twitch message: {dropReason}"
 
 
-def potatSend(message: str, cooldownSend: bool = True) -> str:
+def potatSend(message: str, cdRetries: int = 0) -> str:
     response = requests.post(potatApi+"execute", headers=potatHeaders, json={"text": message})
     if response.status_code != 200:
         if response.status_code == 418:
@@ -102,9 +102,9 @@ def potatSend(message: str, cooldownSend: bool = True) -> str:
         
         if "❌" not in error:
             log(f"POTAT ERROR : {response.json()}")
-            if error.startswith("Command '") and error.endswith("' currently on cooldown.") and cooldownSend:
+            if error.startswith("Command '") and error.endswith("' currently on cooldown.") and cdRetries > 0:
                 log(f"Sent message again: {message=} - {error=}")
-                return potatSend(message, False)
+                return potatSend(message, cdRetries-1)
             return f"Failed to execute command: {error}"
         result = error
     

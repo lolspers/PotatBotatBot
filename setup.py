@@ -1,31 +1,27 @@
 import requests, json
 
-with open("config.json", "r") as file:
-    config = json.loads(file.read())
-
-def getTokenDetails(code, secret, redirect, clientId, potatToken) -> str:
+def getTokenDetails(code, secret, redirect, clientId) -> str:
     response = requests.post(f"https://id.twitch.tv/oauth2/token", data={
         "client_id": clientId, 
         "client_secret": secret, 
         "code": code, 
         "grant_type": "authorization_code", 
-        "redirect_uri": redirect})
+        "redirect_uri": redirect
+    })
+
     if response.status_code != 200:
-        return f"\nFailed to generate token ({response.status_code}): {response.text}"
+        return f"\nFailed to generate token, please try again later ({response.status_code}): {response.json()}"
     
     else:
         data = response.json()
             
-        config["potatToken"] = potatToken
-        config["twitchToken"] = data["access_token"]
-        config["clientId"] = clientId
-        config["refreshToken"] = data["refresh_token"]
-        config["clientSecret"] = secret
+        global config
+        config.update({"twitchToken": data["access_token"]})
+        config.update({"clientId": clientId})
+        config.update({"refreshToken": data["refresh_token"]})
+        config.update({"clientSecret": secret})
 
-        with open("config.json", "w") as file:
-            json.dump(config, file, indent=4)
-
-        return "Generated token and updated config"
+        return "Generated token"
 
 def getUserIds(usernames: list) -> str | dict:
     url = "https://api.twitch.tv/helix/users"
@@ -44,24 +40,27 @@ def getUserIds(usernames: list) -> str | dict:
 
     return userIds
 
-updatePotat = True
-updateTwitch = True
-updateUser = True
 
-if config["potatToken"] != "":
-    if input("You already have a potatbotat token set, do you want to update it? (y/n) ").lower() != "y":
-        updatePotat = False
 
-if updatePotat:
+try:
+    with open("config.json", "r") as file:
+        config = json.loads(file.read())
+except FileNotFoundError:
+    config = {}
+
+
+
+if config.get("potatToken") and input("You already have a potatbotat token set, do you want to update it? (y/n) ").lower() != "y": pass
+else:
     print("Copy your potatbotat token on https://potat.app > f12 > storage > local storage > https://potat.app > authorization")
     potatToken = input("PotatBotat token: ")
 
+    config.update({"potatToken": potatToken})
 
-if config["twitchToken"] != "" and config["clientId"] != "" and config["refreshToken"] != "" and config["clientSecret"] != "":
-    if input("You already have twitch token details set, do you want to update them? (y/n) ").lower() != "y":
-        updateTwitch = False
 
-if updateTwitch:
+
+if config.get("twitchToken") and config.get("clientId") and config.get("refreshToken") and config.get("clientSecret") and input("You already have twitch token details set, do you want to update them? (y/n) ").lower() != "y": pass
+else:
     print("\nOn https://dev.twitch.tv/console/apps go to your application")
     print("Under the name copy one of the OAuth Redirect URLs")
     redirect = input("Redirect URL: ")
@@ -81,7 +80,7 @@ if updateTwitch:
             clientId = input("Client ID: ").strip().lower()
 
     print(f"\nGo to https://id.twitch.tv/oauth2/authorize?response_type=code&client_id={clientId}&redirect_uri={redirect}&scope=user:write:chat")
-    print("From the URL bar copy the code in between 'code=' and '&scope' (the unable to connect doesn't matter)")
+    print("From the URL bar copy the code in between 'code=' and '&scope'")
 
     code = input("Code: ").strip().lower()
     if len(code) != 30:
@@ -90,14 +89,12 @@ if updateTwitch:
             code = input("Code: ").strip().lower()
 
     print("\nGenerating token...")
-    print(getTokenDetails(code, secret, redirect, clientId, potatToken))
+    print(getTokenDetails(code, secret, redirect, clientId))
 
 
-if config["username"] != "" and config["userId"] != "" and config["95676405"] != "":
-    if input("You already have you username and channel set, do you want to update them? (y/n) ") != "y":
-        updateUser = False
 
-if updateUser:
+if config.get("username") and config.get("userId") and config.get("channelId") and input("You already have you username and channel set, do you want to update them? (y/n) ") != "y": pass
+else:
     username = input("\nYour twitch username: ").strip().replace("#", "", 1).replace("@", "", 1).lower()
     channel = input("Channel you want to farm in: ").strip().replace("#", "", 1).replace("@", "", 1).lower()
 
@@ -106,12 +103,15 @@ if updateUser:
         print(userIds)
 
     else:
-        config["username"] = username
-        config["userId"] = userIds[username]
-        config["channelId"] = userIds[channel]
+        config.update({"username": username})
+        config.update({"userId": userIds[username]})
+        config.update({"channelId": userIds[channel]})
 
-        with open("config.json", "w") as file:
-            json.dump(config, file, indent=4)
-        print("Successfully updated config")
+
+
+with open("config.json", "w") as file:
+    json.dump(config, file, indent=4)
+    
+    print("Successfully updated config")
 
 input("\nPress enter to exit")
