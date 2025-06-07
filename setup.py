@@ -89,7 +89,14 @@ else:
             code = input("Code: ").strip().lower()
 
     print("\nGenerating token...")
-    print(getTokenDetails(code, secret, redirect, clientId))
+    result = getTokenDetails(code, secret, redirect, clientId)
+    print(result)
+    if result != "Generated token":
+        with open("config.json", "w") as file:
+            json.dump(config, file, indent=4)
+            
+            print("Updated")
+        input("\nPress enter to exit")
 
 
 
