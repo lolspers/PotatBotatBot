@@ -53,8 +53,6 @@ def refreshToken():
     twitchHeaders["Authorization"] = f"Bearer {twitchToken}"
     config["refreshToken"] = data["refresh_token"]
 
-    log(f"Refreshed token: {twitchToken}")
-
     updateConfig(config)
 
 def twitchSend(message: str) -> str:
