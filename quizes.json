@@ -330,7 +330,7 @@
     "A potato puzzle has 180 pieces, and each piece has a 1 in 60 chance of being placed in the correct position. What is the expected number of pieces that will be correctly placed after assembling the puzzle?":
     "3",
     "A farmer has a field of potatoes. If he plants 5 rows of potatoes, each row containing 12 potatoes, how many potatoes did he plant in total?":
-    "72",
+    "60",
     "Farmer Ryan has 50 potatoes. He packs them into bags, with 5 potatoes in each bag. How many bags does he have?":
     "10"
 }
