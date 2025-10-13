@@ -1,7 +1,10 @@
-from config import *
 import requests
-from data import log, getConfig, updateConfig
 from time import time, sleep
+
+from config import *
+from data import log, getConfig, updateConfig
+from priceUtils import shopItemPrice
+
 
 config = getConfig()
 
@@ -15,8 +18,10 @@ usePotatApi = config["usePotatApi"]
 farmingCommands = config["farmingCommands"]
 shopItems = config["shopItems"]
 
+
 class stopBot(Exception):
     pass
+
 
 twitchHeaders = {
     "Authorization": f"Bearer {twitchToken}",
@@ -33,6 +38,8 @@ potatHeaders = {
     "Authorization": f"Bearer {potatToken}",
     "Content-Type": "application/json"
 }
+
+
 
 def refreshToken():
     response = requests.post("https://id.twitch.tv/oauth2/token", params = {
@@ -55,6 +62,8 @@ def refreshToken():
 
     updateConfig(config)
 
+
+
 def twitchSend(message: str) -> str:
     twitchBody["message"] = message
     
@@ -75,6 +84,7 @@ def twitchSend(message: str) -> str:
     dropReason = data["data"][0]["drop_reason"]["message"]
     log(f"TWITCH DROP ERROR : {response.json()}")
     return f"Failed to sent twitch message: {dropReason}"
+
 
 
 def potatSend(message: str, cdRetries: int = 0) -> str:
@@ -156,6 +166,8 @@ def getPotatoData() -> dict:
 
     return {"potatoes": potatoes, "rank": rank, "prestige": prestige, "cooldowns": filteredCooldowns}
 
+
+
 def getShopCooldowns() -> dict:
     potatStatus = potatSend("#status")
     if not potatStatus.startswith("Executed command"):
@@ -186,6 +198,21 @@ def getShopCooldowns() -> dict:
 
     print(shopCooldowns)
     return shopCooldowns
+
+
+def buyItem(item: str, rank: int, potatoes: int) -> bool:
+    price = shopItemPrice(item=item, rank=rank)
+
+    if potatoes < price:
+        return False
+    
+
+    res = send(f"shop {item}")
+    print(res)
+
+    return True
+
+
 
 def send(message: str):
     message = potatPrefix+message
