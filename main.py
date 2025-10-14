@@ -7,6 +7,7 @@ import colorama
 colorama.init(autoreset=True)
 
 from colorama import Fore, Style
+from datetime import datetime
 from time import time, sleep, strftime
 
 import api
@@ -14,7 +15,6 @@ from config import loopDelay, executedCommand, boughtShopItem, executions, allFa
 from data import getConfig, updateConfig
 from logger import logger
 from priceUtils import rankPrice
-
 
 
 
@@ -122,7 +122,7 @@ while True:
     try:
         if executions > 20:
             logger.warning("Hit client-side ratelimit")
-            print(Fore.RED + f"{strftime("%H:%M:%S")} Hit client-side ratelimit, paused for 1h - commands will not work during this time")
+            print(Fore.RED + f"{strftime("%H:%M:%S")} Hit client-side ratelimit, paused for 1h until {datetime.fromtimestamp(time() + 3600).strftime("%H:%M:%S")} - commands will not work during this time")
 
             executions = 0
             sleep(3600)
@@ -285,7 +285,8 @@ while True:
     except api.stopBot as e:
         logger.critical(f"Stopped bot: {e}")
         print(Style.BRIGHT + Fore.MAGENTA + f"Stopped bot: {e}")
-        sleep(3000000)
+
+        input(Style.DIM + "Press enter to exit.")
 
 
     except Exception as e:
