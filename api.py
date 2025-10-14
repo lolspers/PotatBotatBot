@@ -1,5 +1,6 @@
 import requests
 
+from colorama import Fore, Style
 from time import time, sleep
 
 from config import *
@@ -99,7 +100,7 @@ def twitchSend(message: str, prefix: bool = True) -> tuple[bool, str]:
 
     logger.warning(f"Twitch message dropped: {data}")
 
-    return (True, f"Failed to send twitch message: {data["data"][0]["drop_reason"]["message"]}")
+    return (False, f"Failed to send twitch message: {data["data"][0]["drop_reason"]["message"]}")
 
 
 
@@ -153,15 +154,16 @@ def checkUserPrefix() -> None:
         raise stopBot("Failed to get prefix: PotatBotat is not joined in your channel")
 
 
+    global userPrefix
+
     if userPrefix != prefix:
-        global userPrefix
         userPrefix = prefix
 
         config.update({"userPrefix": prefix})
         updateConfig(config)
 
         logger.debug(f"Updated user prefix to '{prefix}'")
-        print(f"Updated user prefix to '{prefix}'")
+        print(Style.DIM + Fore.CYAN + f"Updated user prefix to '{prefix}'")
 
 
 def checkChannelPrefix() -> None:
@@ -179,15 +181,16 @@ def checkChannelPrefix() -> None:
         raise stopBot("Failed to get prefix: PotatBotat is not joined in the provided channel")
 
 
+    global channelPrefix
+
     if channelPrefix != prefix:
-        global channelPrefix
         channelPrefix = prefix
 
         config.update({"channelPrefix": prefix})
         updateConfig(config)
 
         logger.debug(f"Updated channel prefix to '{prefix}'")
-        print(f"Updated channel prefix to '{prefix}'")
+        print(Style.DIM + Fore.CYAN + f"Updated channel prefix to '{prefix}'")
 
         global lastChannelPrefixCheck
         lastChannelPrefixCheck = time()
@@ -284,7 +287,7 @@ def getPotatoData() -> dict:
     
     logger.debug(f"New cooldowns: {filteredCooldowns}")
     print("Updated cooldowns:")
-    print(str(filteredCooldowns))
+    print(Style.DIM + str(filteredCooldowns))
 
     return {"potatoes": potatoes, "rank": rank, "prestige": prestige, "cooldowns": filteredCooldowns}
 
@@ -322,7 +325,7 @@ def getShopCooldowns() -> dict:
 
     logger.debug(f"New shop cooldowns: {shopCooldowns}")
     print("Updated shop cooldowns:")
-    print(str(shopCooldowns))
+    print(Style.DIM + str(shopCooldowns))
 
     return shopCooldowns
 
@@ -334,8 +337,13 @@ def buyItem(item: str, rank: int, potatoes: int) -> bool:
         return False
     
 
-    res = send(f"shop {item}")
-    print(res)
+    ok, data = send(f"shop {item}")
+
+    if ok:
+        print(f"Bought shop item: {data}")
+
+    else:
+        print(Fore.RED + f"Failed to buy shop item: {data}")
 
     return True
 
