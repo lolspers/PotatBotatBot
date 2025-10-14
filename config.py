@@ -1,4 +1,3 @@
-potatPrefix: str = "#"
 loopDelay: int = 1
 twitchApi = "https://api.twitch.tv/helix/"
 potatApi = "https://api.potat.app/"

@@ -170,9 +170,9 @@ while True:
 
             # first execute the quiz in the targetted twitch chat
             # to not send "🥳 Thats right! Congratulations on getting the right answer, heres # potatoes!" in your own chat
-            print(api.twitchSend("#quiz"))
+            print(api.twitchSend("quiz"))
             sleep(5)
-            quiz = api.potatSend("#quiz", cdRetries=3)
+            quiz = api.potatSend("quiz", cdRetries=3)
 
 
             # Example response:󠀀 ⚠️ You already have an existing quiz in progress! Here is the question in case you forgot: <quiz>
@@ -187,7 +187,7 @@ while True:
 
             print(f"{answer=}")
             sleep(5) # small cooldown to be safe
-            print(api.twitchSend(f"{answer}"))
+            print(api.twitchSend(f"{answer}", prefix=False))
 
             if shopCooldowns.get("shop-quiz", time()+10) < time():
                 if boughtShopItem:

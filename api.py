@@ -11,12 +11,16 @@ config = getConfig()
 twitchToken = config["twitchToken"]
 clientId = config["clientId"]
 channelId = config["channelId"]
+userPrefix = config.get("userPrefix")
+channelPrefix = config.get("channelPrefix")
 userId = config["userId"]
 potatToken = config["potatToken"]
 username = config["username"]
 usePotatApi = config["usePotatApi"]
 farmingCommands = config["farmingCommands"]
 shopItems = config["shopItems"]
+
+lastChannelPrefixCheck = 0
 
 
 class stopBot(Exception):
@@ -64,16 +68,22 @@ def refreshToken():
 
 
 
-def twitchSend(message: str) -> str:
+def twitchSend(message: str, prefix: bool = True) -> str:
+    if prefix:
+        message = channelPrefix + message
+
     twitchBody["message"] = message
     
+
     response = requests.post(twitchApi+"chat/messages", headers=twitchHeaders, json=twitchBody)
+
     data = response.json()
+
     if response.status_code != 200:
         if response.status_code == 401:
             if data["message"] == "Invalid OAuth token":
                 refreshToken()
-                return twitchSend(message)
+                return twitchSend(message, prefix=False)
 
         log(f"TWITCH ERROR : {response.json()} {response.status_code}")
         return f"Failed to send twitch message ({response.status_code}): {data["message"]}"
@@ -87,13 +97,115 @@ def twitchSend(message: str) -> str:
 
 
 
+def getTwitchUser(uid: str) -> dict:
+    response = requests.get(twitchApi+"users", headers=twitchHeaders, params={"id": str(uid)})
+
+    if response.status_code == 401:
+        raise stopBot("Invalid twitch token")
+    
+
+    data = response.json()["data"]
+
+    if not data:
+        return {}
+    
+    return data[0]
+
+
+
+def getPotatUser(username: str) -> dict:
+    response = requests.get(potatApi + f"users/{username}")
+
+    if response.status_code != 200:
+        log(f"Failed to get twitch user data: {response.json()} {response.status_code}")
+        raise Exception(f"Failed to get potat user data: {response.json()} {response.status_code}")
+
+    data = response.json()
+
+    return data["data"][0]
+
+
+
+def getPrefix(username: str) -> str | None:
+    channelData = getPotatUser(username)
+
+    if not channelData.get("channel"):
+        return None
+
+    prefix = channelData["channel"]["settings"]["prefix"]
+
+    if isinstance(prefix, list):
+        prefix = prefix[0]
+
+    return prefix
+
+
+def checkUserPrefix() -> None:
+    prefix = getPrefix(username)
+
+    if not prefix:
+        raise stopBot("Failed to get prefix: PotatBotat is not joined in your channel")
+
+
+    if userPrefix != prefix:
+        global userPrefix
+        userPrefix = prefix
+
+        config.update({"userPrefix": prefix})
+        updateConfig(config)
+
+        print(f"Updated user prefix to '{prefix}'")
+
+
+def checkChannelPrefix() -> None:
+    channelData = getTwitchUser(channelId)
+
+    if not channelData:
+        raise stopBot("The provided channel id was not found!")
+    
+    channelName = channelData["login"]
+
+    prefix = getPrefix(channelName)
+
+    if not prefix:
+        raise stopBot("Failed to get prefix: PotatBotat is not joined in the provided channel")
+
+
+    if channelPrefix != prefix:
+        global channelPrefix
+        channelPrefix = prefix
+
+        config.update({"channelPrefix": prefix})
+        updateConfig(config)
+
+        print(f"Updated channel prefix to '{prefix}'")
+
+        global lastChannelPrefixCheck
+        lastChannelPrefixCheck = time()
+
+
+
 def potatSend(message: str, cdRetries: int = 0) -> str:
-    response = requests.post(potatApi+"execute", headers=potatHeaders, json={"text": message})
+    response = requests.post(potatApi+"execute", headers=potatHeaders, json={"text": userPrefix + message})
+
     if response.status_code != 200:
         if response.status_code == 418:
             log(f"INVALID POTAT TOKEN: {response.json()}")
             print("Invalid potatbotat token")
-            raise stopBot
+            raise stopBot("Invalid PotatBotat token")
+        
+        elif response.status_code == 404:
+            try:
+                data = response.json()
+
+                if data.get("errors", [{}])[0].get("message") == "Command invocation didn't return any result.":
+                    
+                    checkChannelPrefix()
+
+
+            except Exception:
+                pass
+
 
         log(f"POTAT ERROR : {response.json()} {response.status_code}")
         return f"{response.json()} {response.status_code}"
@@ -106,7 +218,7 @@ def potatSend(message: str, cdRetries: int = 0) -> str:
             return error.split("⚠️ You already have an existing quiz in progress! Here is the question in case you forgot: ", 1)[1]
         
         if error == "󠀀⚠️ You did not answer your last quiz in time, and it expired... Run the command again to start a new quiz!":
-            return potatSend("#quiz")
+            return potatSend("quiz")
         
         if "❌" not in error:
             log(f"POTAT ERROR : {response.json()}")
@@ -134,13 +246,9 @@ def potatSend(message: str, cdRetries: int = 0) -> str:
 
 
 def getPotatoData() -> dict:
-    response = requests.get(potatApi+"users/"+username)
-    if response.status_code != 200:
-        log(f"POTAT DATA ERROR : {response.json()} {response.status_code}")
-        raise Exception(f"FAILED TO GET POTAT COOLDOWNS: {response.json()} {response.status_code}")
+    data = getPotatUser(username)
 
-    data = response.json()
-    potatoData = data["data"][0]["potatoes"]
+    potatoData = data[0]["potatoes"]
 
     potatoes = potatoData["count"]
     rank = potatoData["rank"]
@@ -162,6 +270,7 @@ def getPotatoData() -> dict:
             filteredCooldowns[cooldown] = 0
         else:
             filteredCooldowns[cooldown] = cooldowns[cooldown]/1000
+    
     print(filteredCooldowns)
 
     return {"potatoes": potatoes, "rank": rank, "prestige": prestige, "cooldowns": filteredCooldowns}
@@ -169,11 +278,11 @@ def getPotatoData() -> dict:
 
 
 def getShopCooldowns() -> dict:
-    potatStatus = potatSend("#status")
+    potatStatus = potatSend("status")
     if not potatStatus.startswith("Executed command"):
         raise Exception(f"Failed to get shop cooldowns: {potatStatus}")
     
-    # Example message :  Potato: 28m and 23s ● Cooldown: ✅ ● Trample: ✅ ● Steal: 1h and 48m ● Eat: 26m and 12s ● Quiz: 41m and 54s ● Shop-Quiz: ✅ ● Shop-Cdr: 15h and 53m ● Shop-Fertilizer: ✅ ● Shop-Guard: ✅
+    # Example message: Potato: 28m and 23s ● Cooldown: ✅ ● Trample: ✅ ● Steal: 1h and 48m ● Eat: 26m and 12s ● Quiz: 41m and 54s ● Shop-Quiz: ✅ ● Shop-Cdr: 15h and 53m ● Shop-Fertilizer: ✅ ● Shop-Guard: ✅
 
     potatStatus = potatStatus.split(": ", 2)[2].replace("✅", "0s").lower()
     potatCooldowns = {}
@@ -187,11 +296,11 @@ def getShopCooldowns() -> dict:
             continue
 
         cooldowns = potatCooldowns[command].split(" and ")
-        readyIn = time() # seconds until cooldown is over
+        readyIn = time()
 
         for cooldown in cooldowns:
             if not "s" in cooldown:
-                readyIn += 60 # add a minute because #status rounds minutes down
+                readyIn += 60 # status rounds minutes down
             readyIn += int(cooldown[:-1]) * unitToSeconds[cooldown[-1]]
 
         shopCooldowns[command] = readyIn
@@ -215,8 +324,15 @@ def buyItem(item: str, rank: int, potatoes: int) -> bool:
 
 
 def send(message: str):
-    message = potatPrefix+message
     if usePotatApi:
         return potatSend(message)
     else:
+        if time() > lastChannelPrefixCheck + 3600:
+            checkChannelPrefix()
+
         return twitchSend(message)
+
+
+
+if not userPrefix:
+    checkUserPrefix()
