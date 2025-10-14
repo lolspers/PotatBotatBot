@@ -8,7 +8,8 @@ from time import time, sleep, strftime
 
 import api
 from config import loopDelay, executedCommand, boughtShopItem, executions, allFarmingCommands, allShopItems
-from data import getConfig, updateConfig, log
+from data import getConfig, updateConfig
+from logger import logger
 from priceUtils import rankPrice
 
 
@@ -23,40 +24,64 @@ cooldowns = []
 uInputs = queue.Queue()
 
 def inputs():
+    logger.debug("Started input loop")
+
     while True:
         uInput = input().lower()
         uInputs.put(uInput)
 
         if uInput == "s":
+            logger.info("Stopped input loop by users request")
             break
+
+
         elif uInput in allFarmingCommands:
-            config["farmingCommands"][uInput] = bool(config["farmingCommands"][uInput] is False)
+            newValue = bool(config["farmingCommands"][uInput] is False)
+            config["farmingCommands"][uInput] = newValue
+
             api.farmingCommands = config["farmingCommands"]
             updateConfig(config)
-            print(f"Toggled command '{uInput}', set to {config["farmingCommands"][uInput]}")
+
+            logger.info(f"Toggled command '{uInput}', set to {newValue}")
+            print(f"{"Enabled" if newValue is True else "Disabled"} command '{uInput}'")
+
 
         elif uInput in allShopItems:
-            config["shopItems"][uInput] = bool(config["shopItems"][uInput] is False)
+            newValue = bool(config["shopItems"][uInput] is False)
+            config["shopItems"][uInput] = newValue
+
             api.shopItems = config["shopItems"]
             updateConfig(config)
-            print(f"Toggled auto buying for '{uInput}', set to {config["shopItems"][uInput]}")
+
+            logger.info(f"Toggled auto buying for '{uInput}', set to {newValue}")
+            print(f"{"Enabled" if newValue else "Disabled"} auto buying for '{uInput}'")
+
 
         elif "twitch" in uInput:
             api.usePotatApi = False
             config["usePotatApi"] = False
             updateConfig(config)
+
+            logger.info("Enabled sending messages on twitch")
             print("Switched to twitch messages")
+
 
         elif uInput == "potat" or uInput == "potatbotat":
             api.usePotatApi = True
             config["usePotatApi"] = True
             updateConfig(config)
-            print("Switched to potatbotat api")
+
+            logger.info("Enabled sending messages through potat api")
+            print("Switched to potat api")
+
 
         elif uInput == "refresh":
+            logger.info("User requested to refresh cooldowns")
             print("Refreshing cooldowns...")
 
+
         else:
+            logger.debug(f"Invalid user command: {uInput}")
             print(f"Invalid command: '{uInput}'")
 
         print("\n")
@@ -71,28 +96,37 @@ print("Valid commands:")
 print("'s': Stop the bot and close the program")
 print("'potat': Change to potatbotat api")
 print("'twitch': Change to twitch api")
+
 longestFarmingCommand = len(max(allShopItems, key=len))
 for command in allFarmingCommands:
     print(f"{f"'{command}': Toggle auto farming for {command}": <{longestFarmingCommand*2+20}} (Currently set to {config["farmingCommands"][command]})")
+
 longestShopItem = len(max(allShopItems, key=len))
 for item in allShopItems:
     print(f"{f"'{item}': Toggle auto buying from the shop for {item.split("shop-", 1)[1]}": <{longestShopItem*2+40}} (Currently set to {config["shopItems"][item]})")
+
 print("'refresh': Refresh potatbotat cooldowns if they are wrong\n")
 print("Manual changes to config requires restart to update\n")
 
 
+logger.debug("Started bot")
+
 while True:
     try:
         if executions > 20:
-            api.log("TOO MANY EXECUTIONS")
-            print(f"{strftime("%H:%M:%S")} Errored / executed too many commands in a short period of time, paused for 1h - commands will not work during this time")
+            logger.warning("Hit client-side ratelimit")
+            print(f"{strftime("%H:%M:%S")} Hit client-side ratelimit, paused for 1h - commands will not work during this time")
+
             executions = 0
             sleep(3600)
+
+            logger.debug("Resumed bot")
 
 
         if not uInputs.empty():
             uInput = uInputs.get()
             if uInput == "s":
+                logger.info("Stopped bot by users request")
                 break
 
             elif uInput in allFarmingCommands:
@@ -123,6 +157,8 @@ while True:
             rankCost = rankPrice(prestige, rank)
 
             cooldowns = potatoData["cooldowns"]
+
+            logger.debug("Refreshed cooldowns")
             print("Refreshed cooldowns\n")
 
             executedCommand = False
@@ -132,6 +168,7 @@ while True:
                     print(api.send("prestige"))
                 else:
                     print(api.send("rankup"))
+                
                 executedCommand = True
 
 
@@ -180,8 +217,8 @@ while True:
             answer = quizes.get(quiz, None)
 
             if answer is None:
-                log(f"FAILED QUIZ: {quiz=}")
-                print("FAILED QUIZ")
+                logger.warning(f"No quiz anser found for quiz: {quiz}")
+                print(f"No quiz answer found for quiz: {quiz}")
                 continue
             
 
@@ -204,20 +241,15 @@ while True:
 
 
     except api.stopBot as e:
-        log(f"STOPPED BOT: {e}")
-        print(f"stopped bot: {e}")
+        logger.critical(f"Stopped bot: {e}")
+        print(f"Stopped bot: {e}")
         sleep(3000000)
 
-    except IndexError as e:
-        executions += 1
-        print(f"ERROR: {e}")
-        log(f"INDEX ERROR : {type(e).__name__} {e}")
-        log(format_exc())
-        sleep(5)
 
     except Exception as e:
         executions += 1
         print(f"ERROR: {e}")
-        log(f"EXCEPTION ERROR : {type(e).__name__} {e}")
-        log(format_exc())
+
+        logger.error(f"Caught exception in main", exc_info=e)
+
         sleep(5)
