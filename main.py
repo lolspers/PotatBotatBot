@@ -3,7 +3,6 @@ import json
 import threading
 import queue
 
-from traceback import format_exc
 from time import time, sleep, strftime
 
 import api
@@ -22,6 +21,7 @@ potatData = {}
 cooldowns = []
 
 uInputs = queue.Queue()
+
 
 def inputs():
     logger.debug("Started input loop")
@@ -165,9 +165,12 @@ while True:
 
             if potatoes >= rankCost:
                 if rank == 6:
-                    print(api.send("prestige"))
+                    ok, response = api.send("prestige")
+                    print(response)
+
                 else:
-                    print(api.send("rankup"))
+                    ok, response = api.send("rankup")
+                    print(response)
                 
                 executedCommand = True
 
@@ -191,7 +194,9 @@ while True:
                         boughtShopItem = api.buyItem(item="guard", rank=rank, potatoes=potatoes) if not boughtShopItem else boughtShopItem
 
 
-                print(api.send(cooldown))
+                ok, response = api.send(cooldown)
+
+                print(response)
 
 
                 if cooldown == "cdr":
@@ -207,9 +212,16 @@ while True:
 
             # first execute the quiz in the targetted twitch chat
             # to not send "🥳 Thats right! Congratulations on getting the right answer, heres # potatoes!" in your own chat
-            print(api.twitchSend("quiz"))
+            ok, response = api.twitchSend("quiz")
+            print(response)
             sleep(5)
-            quiz = api.potatSend("quiz", cdRetries=3)
+
+            ok, quiz = api.potatSend("quiz", cdRetries=3)
+
+            if not ok:
+                logger.warning(f"Failed to get quiz: {quiz}")
+                print(f"Failed to get quiz: {quiz}")
+                continue
 
 
             # Example response:󠀀 ⚠️ You already have an existing quiz in progress! Here is the question in case you forgot: <quiz>
@@ -222,9 +234,12 @@ while True:
                 continue
             
 
-            print(f"{answer=}")
+            print(f"Found quiz answer: {answer}")
+
             sleep(5) # small cooldown to be safe
-            print(api.twitchSend(f"{answer}", prefix=False))
+            pk, response = api.twitchSend(f"{answer}", prefix=False)
+            print(response)
+
 
             if shopCooldowns.get("shop-quiz", time()+10) < time():
                 if boughtShopItem:
