@@ -2,7 +2,7 @@
 A bot for automating [PotatBotat](https://potat.app) farming commands.
 
 ## Installation
-Make sure you have [python](https://www.python.org/downloads/) (at least 3.12).
+Make sure you have [python](https://www.python.org/downloads/) (at least 3.12) installed.
 
 Clone the repository in a terminal like powershell.
 ```bash
