@@ -4,15 +4,22 @@ A bot for automating [PotatBotat](https://potat.app) farming commands.
 ## Installation
 Make sure you have [python](https://www.python.org/downloads/) (at least 3.12).
 
+Clone the repository in a terminal like powershell.
+```bash
+git clone https://github.com/lolspers/PotatBotatbot.git
+```
+
+Cd into the cloned repo
+
+```bash
+cd PotatBotatBot
+```
+
 Install the required packages
 ```bash
 pip install -r requirements.txt
 ```
 
-Clone the repository in a terminal like powershell.
-```bash
-git clone https://github.com/lolspers/PotatBotatbot
-```
 
 Make (or use an existing) [application](https://dev.twitch.tv/console/apps) and set Client Type to Confidential.
 If you don't have a website for the redirect URI you can set it to `http://localhost`.
