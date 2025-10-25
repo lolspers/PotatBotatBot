@@ -158,6 +158,15 @@ while True:
             shopCooldowns = api.getShopCooldowns()
             boughtShopItem = False
 
+            print("Refreshed shop cooldowns")
+
+            for item, cooldown in shopCooldowns.items():
+                readyIn = relative(cooldown)
+
+                cprint(f"{item}: {readyIn}", style=Style.DIM if "in" in readyIn else None)
+
+            print()
+
 
         if executedCommand:
             executions += 1
@@ -172,13 +181,14 @@ while True:
             cooldowns: dict[str, int] = potatoData["cooldowns"]
 
 
-            logger.debug("Refreshed cooldowns")
-            print("Refreshed cooldowns\n")
+            print("Refreshed cooldowns")
 
             for command, cooldown in cooldowns.items():
                 readyIn = relative(cooldown)
 
                 cprint(f"{command}: {readyIn}", style=Style.DIM if "in" in readyIn else None)
+
+            print()
             
 
             executedCommand = False

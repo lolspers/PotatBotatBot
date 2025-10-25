@@ -45,7 +45,7 @@ def shopItemPrice(item: str, rank: int) -> int:
 
 
 
-def formatSeconds(n: int) -> str:
+def formatSeconds(n: int | float) -> str:
     n = int(n)
     parts = []
     
@@ -64,7 +64,7 @@ def formatSeconds(n: int) -> str:
 
 
 
-def relative(n: int) -> str:
+def relative(n: int | float) -> str:
     formatted = formatSeconds(n)
 
     return f"in {formatted}" if n >= 0 else f"{formatted} ago"

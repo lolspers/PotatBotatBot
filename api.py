@@ -292,7 +292,7 @@ def getPotatoData() -> dict:
 
 
 
-def getShopCooldowns() -> dict:
+def getShopCooldowns() -> dict[str, float]:
     ok, result = potatSend("status")
 
     if not ok:
@@ -323,8 +323,6 @@ def getShopCooldowns() -> dict:
 
 
     logger.debug(f"New shop cooldowns: {shopCooldowns}")
-    print("Updated shop cooldowns:")
-    print(Style.DIM + str(shopCooldowns))
 
     return shopCooldowns
 
