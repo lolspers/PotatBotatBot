@@ -3,25 +3,13 @@ import requests
 from colorama import Fore, Style
 from time import time, sleep
 
-from config import *
-from data import getConfig, updateConfig
+from config import config
 from logger import logger
 from priceUtils import shopItemPrice
 
 
-config = getConfig()
-
-twitchToken = config["twitchToken"]
-clientId = config["clientId"]
-channelId = config["channelId"]
-userPrefix = config.get("userPrefix")
-channelPrefix = config.get("channelPrefix")
-userId = config["userId"]
-potatToken = config["potatToken"]
-username = config["username"]
-usePotatApi = config["usePotatApi"]
-farmingCommands = config["farmingCommands"]
-shopItems = config["shopItems"]
+twitchApi = "https://api.twitch.tv/helix/"
+potatApi = "https://api.potat.app/"
 
 lastChannelPrefixCheck = 0
 
@@ -29,57 +17,63 @@ lastChannelPrefixCheck = 0
 class stopBot(Exception):
     pass
 
+ 
 
-twitchHeaders = {
-    "Authorization": f"Bearer {twitchToken}",
-    "Client-Id": clientId,
-    "Content-Type": "application/json"
-}
-twitchBody = {
-    "broadcaster_id": channelId,
-    "sender_id": userId,
-    "message": None
-}
+def twitchHeaders() -> dict:
+    return {
+        "Authorization": f"Bearer {config.twitchToken}",
+        "Client-Id": config.clientId,
+        "Content-Type": "application/json"
+    }
 
-potatHeaders = {
-    "Authorization": f"Bearer {potatToken}",
-    "Content-Type": "application/json"
-}
+
+def potatHeaders() -> dict:
+    return {
+        "Authorization": f"Bearer {config.potatToken}",
+        "Content-Type": "application/json"
+    }
 
 
 
 def refreshToken():
-    response = requests.post("https://id.twitch.tv/oauth2/token", params = {
-        "client_id": clientId,
-        "client_secret": config["clientSecret"],
-        "grant_type": "refresh_token",
-        "refresh_token": config["refreshToken"],
-    }, headers = {
-        "Content-Type": "x-www-form-urlencoded"
-    })
+    response = requests.post(
+        url = "https://id.twitch.tv/oauth2/token", 
+        params = {
+            "client_id": config.clientId,
+            "client_secret": config.clientSecret,
+            "grant_type": "refresh_token",
+            "refresh_token": config.refreshToken,
+        }, 
+        headers = {
+            "Content-Type": "x-www-form-urlencoded"
+        }
+    )
+
     if response.status_code != 200:
         raise stopBot(f"Failed to refresh token: {response.json()}")
     
+    
     data = response.json()
-    global twitchToken
-    twitchToken = data["access_token"]
-    config["twitchToken"] = twitchToken
-    twitchHeaders["Authorization"] = f"Bearer {twitchToken}"
-    config["refreshToken"] = data["refresh_token"]
 
-    updateConfig(config)
+    config.updateTwitchTokens(accessToken=data["access_token"], refreshToken=data["refresh_token"])
 
 
 
 def twitchSend(message: str, prefix: bool = True) -> tuple[bool, str]:
     if prefix:
-        message = channelPrefix + message
-
-    twitchBody["message"] = message
+        message = config.channelPrefix + message
     
     logger.debug(f"Sending message through twitch api: {message}")
 
-    response = requests.post(twitchApi+"chat/messages", headers=twitchHeaders, json=twitchBody)
+    response = requests.post(
+        url = twitchApi + "chat/messages", 
+        headers = twitchHeaders(), 
+        json = {
+            "broadcaster_id": config.channelId,
+            "sender_id": config.userId,
+            "message": message
+        }
+    )
 
     data = response.json()
 
@@ -87,7 +81,9 @@ def twitchSend(message: str, prefix: bool = True) -> tuple[bool, str]:
         if response.status_code == 401:
             if data["message"] == "Invalid OAuth token":
                 refreshToken()
+
                 return twitchSend(message, prefix=False)
+
 
         logger.error(f"Failed to send twitch message ({response.status_code}): {response.json()}")
         return (False, f"Failed to send twitch message ({response.status_code}): {data["message"]}")
@@ -105,10 +101,18 @@ def twitchSend(message: str, prefix: bool = True) -> tuple[bool, str]:
 
 
 def getTwitchUser(uid: str) -> dict:
-    response = requests.get(twitchApi+"users", headers=twitchHeaders, params={"id": str(uid)})
+    response = requests.get(
+        url = twitchApi + "users", 
+        headers = twitchHeaders(), 
+        params = {
+            "id": str(uid)
+        }
+    )
 
     if response.status_code == 401:
-        raise stopBot("Invalid twitch token")
+        refreshToken()
+
+        return getTwitchUser(uid)
     
 
     data = response.json()["data"]
@@ -146,32 +150,31 @@ def getPrefix(username: str) -> str | None:
     return prefix
 
 
+
 def checkUserPrefix() -> None:
     logger.debug("Checking user prefix")
-    prefix = getPrefix(username)
+
+    prefix = getPrefix(config.username)
 
     if not prefix:
         raise stopBot("Failed to get prefix: PotatBotat is not joined in your channel")
 
 
-    global userPrefix
+    if config.userPrefix != prefix:
+        config.updateUserPrefix(prefix)
 
-    if userPrefix != prefix:
-        userPrefix = prefix
-
-        config.update({"userPrefix": prefix})
-        updateConfig(config)
-
-        logger.debug(f"Updated user prefix to '{prefix}'")
         print(Style.DIM + Fore.CYAN + f"Updated user prefix to '{prefix}'")
+
 
 
 def checkChannelPrefix() -> None:
     logger.debug("Checking channel prefix")
-    channelData = getTwitchUser(channelId)
+
+    channelData = getTwitchUser(config.channelId)
 
     if not channelData:
         raise stopBot("The provided channel id was not found!")
+    
     
     channelName = channelData["login"]
 
@@ -181,15 +184,9 @@ def checkChannelPrefix() -> None:
         raise stopBot("Failed to get prefix: PotatBotat is not joined in the provided channel")
 
 
-    global channelPrefix
+    if config.channelPrefix != prefix:
+        config.updateChannelPrefix(prefix)
 
-    if channelPrefix != prefix:
-        channelPrefix = prefix
-
-        config.update({"channelPrefix": prefix})
-        updateConfig(config)
-
-        logger.debug(f"Updated channel prefix to '{prefix}'")
         print(Style.DIM + Fore.CYAN + f"Updated channel prefix to '{prefix}'")
 
         global lastChannelPrefixCheck
@@ -198,10 +195,10 @@ def checkChannelPrefix() -> None:
 
 
 def potatSend(message: str, cdRetries: int = 0) -> tuple[bool, str]:
-    message = userPrefix + message
+    message = config.userPrefix + message
 
     logger.debug(f"Sending message through potat api: {message}")
-    response = requests.post(potatApi+"execute", headers=potatHeaders, json={"text": message})
+    response = requests.post(potatApi+"execute", headers=potatHeaders(), json={"text": message})
 
     data = response.json()
 
@@ -259,8 +256,9 @@ def potatSend(message: str, cdRetries: int = 0) -> tuple[bool, str]:
     return (True, f"Executed command: '{message}': {result}")
 
 
+
 def getPotatoData() -> dict:
-    data = getPotatUser(username)
+    data = getPotatUser(config.username)
 
     potatoData = data[0]["potatoes"]
 
@@ -277,15 +275,19 @@ def getPotatoData() -> dict:
     }
     filteredCooldowns = {}
 
-    for cooldown in cooldowns:
-        if farmingCommands[cooldown] is False:
+    for command, cooldown in cooldowns.items():
+        if not config.isEnabled(command):
             continue
-        if cooldowns[cooldown] is None:
-            filteredCooldowns[cooldown] = 0
+
+        if cooldown is None:
+            filteredCooldowns[command] = 0
+
         else:
-            filteredCooldowns[cooldown] = int(cooldowns[cooldown]/1000 + 1)
+            filteredCooldowns[command] = int(cooldown/1000 + 1)
     
-    logger.debug(f"New cooldowns: {filteredCooldowns}")
+    
+    logger.debug(f"Updated cooldowns: {filteredCooldowns}")
+
     print("Updated cooldowns:")
     print(Style.DIM + str(filteredCooldowns))
 
@@ -309,7 +311,7 @@ def getShopCooldowns() -> dict:
 
     shopCooldowns = {}
     for command in potatCooldowns:
-        if not shopItems.get(command, False):
+        if not config.isEnabled(command):
             continue
 
         cooldowns = potatCooldowns[command].split(" and ")
@@ -328,6 +330,7 @@ def getShopCooldowns() -> dict:
     print(Style.DIM + str(shopCooldowns))
 
     return shopCooldowns
+
 
 
 def buyItem(item: str, rank: int, potatoes: int) -> bool:
@@ -350,7 +353,7 @@ def buyItem(item: str, rank: int, potatoes: int) -> bool:
 
 
 def send(message: str) -> tuple[bool, str]:
-    if usePotatApi:
+    if config.usePotat:
         return potatSend(message)
 
     else:
@@ -361,5 +364,5 @@ def send(message: str) -> tuple[bool, str]:
 
 
 
-if not userPrefix:
+if not config.userPrefix:
     checkUserPrefix()

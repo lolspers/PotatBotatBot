@@ -1,4 +1,4 @@
 config.json
 logs.txt
-/__pycache__
 logs.log
+__pycache__/

@@ -11,20 +11,27 @@ from datetime import datetime
 from time import time, sleep, strftime
 
 import api
-from config import loopDelay, executedCommand, boughtShopItem, executions, allFarmingCommands, allShopItems
-from data import getConfig, updateConfig
+from config import config
 from logger import logger
 from priceUtils import rankPrice
-
 
 
 with open("quizes.json", "r") as file:
     quizes = json.loads(file.read())
 
-config = getConfig()
 
 potatData = {}
 cooldowns = []
+
+loopDelay: int = 1
+executions: float = 0
+
+allFarmingCommands: list[str] = ["potato", "steal", "trample", "cdr", "quiz"]
+allShopItems: list[str] = ["shop-fertilizer", "shop-guard", "shop-cdr", "shop-quiz"]
+
+executedCommand: bool = True
+boughtShopItem: bool = True
+
 
 uInputs = queue.Queue()
 
@@ -42,59 +49,55 @@ def inputs():
 
 
         elif uInput in allFarmingCommands:
-            newValue = bool(config["farmingCommands"][uInput] is False)
-            config["farmingCommands"][uInput] = newValue
-
-            api.farmingCommands = config["farmingCommands"]
-            updateConfig(config)
-
-            logger.info(f"Toggled command '{uInput}', set to {newValue}")
-            print(Fore.CYAN + f"{"Enabled" if newValue is True else "Disabled"} command '{uInput}'")
+            enabled = config.toggleCommand(uInput)
+            
+            print(Fore.CYAN + f"{"Enabled" if enabled else "Disabled"} command '{uInput}'")
 
 
         elif uInput in allShopItems:
-            newValue = bool(config["shopItems"][uInput] is False)
-            config["shopItems"][uInput] = newValue
+            enabled = config.toggleCommand(uInput)
 
-            api.shopItems = config["shopItems"]
-            updateConfig(config)
-
-            logger.info(f"Toggled auto buying for '{uInput}', set to {newValue}")
-            print(Fore.CYAN + f"{"Enabled" if newValue else "Disabled"} auto buying for '{uInput}'")
+            print(Fore.CYAN + f"{"Enabled" if enabled else "Disabled"} auto buying for '{uInput}'")
 
 
         elif "twitch" in uInput:
-            api.usePotatApi = False
-            config["usePotatApi"] = False
-            updateConfig(config)
+            enabled = config.enableTwitch()
 
-            logger.info("Enabled sending messages on twitch")
-            print(Fore.CYAN + "Switched to twitch messages")
+            if not enabled:
+                print(Fore.MAGENTA + "Cannot enable twitch api: A required twitch credential in is not set in the config!")
+
+            else:
+                print(Fore.CYAN + "Switched to twitch messages")
 
 
         elif uInput == "potat" or uInput == "potatbotat":
-            api.usePotatApi = True
-            config["usePotatApi"] = True
-            updateConfig(config)
+            enabled = config.enablePotat()
 
-            logger.info("Enabled sending messages through potat api")
-            print(Fore.CYAN + "Switched to potat api")
+            if not enabled:
+                print(Fore.MAGENTA + "Cannot enable potat api: potatToken is not set in the config!")
+
+            else:
+                print(Fore.CYAN + "Switched to potat api")
 
 
         elif uInput == "refresh":
-            logger.info("User requested to refresh cooldowns")
+            logger.info("User requested a cooldown refresh")
+
             print(Fore.CYAN + "Refreshing cooldowns...")
 
 
         else:
             logger.debug(f"Invalid user command: {uInput}")
+
             print(Fore.CYAN + f"Invalid command: '{uInput}'")
 
         print("\n")
 
 
+
 inputThread = threading.Thread(target=inputs, daemon=True)
 inputThread.start()
+
 
 
 print(Style.DIM + "Type at any time to execute a command")
@@ -106,11 +109,11 @@ print(Style.DIM + Fore.GREEN + "'s': Stop the bot and close the program\n"
 
 longestFarmingCommand = len(max(allShopItems, key=len))
 for command in allFarmingCommands:
-    print(Style.DIM + Fore.GREEN + f"{f"'{command}': Toggle auto farming for {command}": <{longestFarmingCommand*2+20}} (Currently set to {config["farmingCommands"][command]})")
+    print(Style.DIM + Fore.GREEN + f"{f"'{command}': Toggle auto farming for {command}": <{longestFarmingCommand*2+20}} (Currently set to {config.isEnabled(command)})")
 
 longestShopItem = len(max(allShopItems, key=len))
 for item in allShopItems:
-    print(Style.DIM + Fore.GREEN + f"{f"'{item}': Toggle auto buying from the shop for {item.split("shop-", 1)[1]}": <{longestShopItem*2+40}} (Currently set to {config["shopItems"][item]})")
+    print(Style.DIM + Fore.GREEN + f"{f"'{item}': Toggle auto buying from the shop for {item.split("shop-", 1)[1]}": <{longestShopItem*2+40}} (Currently set to {config.isEnabled(item)})")
 
 print(Style.DIM + Fore.GREEN + "'refresh': Force refresh potatbotat cooldowns\n")
 print(Fore.GREEN + "Manual changes to config requires a restart to update\n")
@@ -277,7 +280,9 @@ while True:
             executions += 2
             continue
 
+
         executions -= loopDelay/10 if loopDelay < 90 else 0.9
+
         sleep(loopDelay)
 
 
