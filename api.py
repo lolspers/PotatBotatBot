@@ -5,7 +5,7 @@ from time import time, sleep
 
 from config import config
 from logger import logger
-from priceUtils import shopItemPrice
+from utils import shopItemPrice
 
 
 twitchApi = "https://api.twitch.tv/helix/"
@@ -287,9 +287,6 @@ def getPotatoData() -> dict:
     
     
     logger.debug(f"Updated cooldowns: {filteredCooldowns}")
-
-    print("Updated cooldowns:")
-    print(Style.DIM + str(filteredCooldowns))
 
     return {"potatoes": potatoes, "rank": rank, "prestige": prestige, "cooldowns": filteredCooldowns}
 

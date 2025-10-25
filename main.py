@@ -10,15 +10,13 @@ from time import time, sleep, strftime
 import api
 from config import config
 from logger import logger, cprint, clprint
-from priceUtils import rankPrice
+from utils import rankPrice, relative
 
 
 with open("quizes.json", "r") as file:
     quizes = json.loads(file.read())
 
 
-potatData = {}
-cooldowns = []
 
 loopDelay: int = 1
 executions: float = 0
@@ -165,16 +163,23 @@ while True:
             executions += 1
             potatoData = api.getPotatoData()
 
-            potatoes = potatoData["potatoes"]
-            rank = potatoData["rank"]
-            prestige = potatoData["prestige"]
+            potatoes: int = potatoData["potatoes"]
+            rank: int = potatoData["rank"]
+            prestige: int = potatoData["prestige"]
 
-            rankCost = rankPrice(prestige, rank)
+            rankCost: int = rankPrice(prestige, rank)
 
-            cooldowns = potatoData["cooldowns"]
+            cooldowns: dict[str, int] = potatoData["cooldowns"]
+
 
             logger.debug("Refreshed cooldowns")
-            cprint("Refreshed cooldowns\n", style=Style.DIM)
+            print("Refreshed cooldowns\n")
+
+            for command, cooldown in cooldowns.items():
+                readyIn = relative(cooldown)
+
+                cprint(f"{command}: {readyIn}", style=Style.DIM if "in" in readyIn else None)
+            
 
             executedCommand = False
 
