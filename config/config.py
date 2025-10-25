@@ -1,9 +1,9 @@
 import json
 
-from colorama import Fore, Style
+from colorama import Fore, Style, Back
 from os import _exit
 
-from logger import logger
+from logger import logger, cprint, clprint, setPrintColors
 
 
 filePath = "config.json"
@@ -22,17 +22,26 @@ class Config:
         except FileNotFoundError:
             logger.warning("config.json file was not found")
 
-            input(Fore.MAGENTA + "Please set up config.json or run setup.py before starting the bot")
+            clprint("Please set up", "config.json", "or run", "setup.py", "before starting the bot", 
+                    style=[None, Style.BRIGHT, None, Style.BRIGHT], globalFore=Fore.MAGENTA)
+            input()
             _exit(1)
 
         except Exception as e:
             logger.error("Failed to get config", exc_info=e)
 
-            input(Fore.MAGENTA + "Failed to read config file, check logs.log for detailed error data. Please make an issue on github or contact lolspers on twitch if this issue persists.")
+            clprint("Failed to read config file, check", "logs.log", "for detailed error data.", "Please make an issue on github or contact lolspers on twitch if this issue persists.", 
+                    style=[None, Style.BRIGHT, None, Style.BRIGHT], globalFore=Fore.MAGENTA)
+            input()
             _exit(1)
 
 
         try:
+            self.color: bool = bool(data.get("printInColor"))
+
+            setPrintColors(self.color)
+
+
             self.username: str = data["username"]
             self.userId: str = data["userId"]
             self.channelId: str = data["channelId"]
@@ -60,20 +69,25 @@ class Config:
 
 
         except KeyError as e:
-            input(Fore.MAGENTA + f"Missing value in config.json: {str(e)}, please make sure 'config.json' matches with 'example-config.json'. If you used 'setup.py' or believe this is an error, please make an issue on github or contact lolspers on twitch.")
+            clprint(f"Missing value in config.json:", str(e), "- please make sure", "'config.json'", "matches with", "'example-config.json'. " \
+                    "If you used 'setup.py' or believe this is an error, please make an issue on github or contact lolspers on twitch.", 
+                    style=[None, Style.BRIGHT, None, Style.BRIGHT, None, Style.BRIGHT], globalFore=Fore.MAGENTA)
+            input()
             _exit(1)
 
 
         if self.usePotat and not self.potatToken:
-            input(Fore.MAGENTA + "Using potat api, but no potat api token is set.")
+            cprint("Using potat api, but no potat api token is set.", fore=Fore.MAGENTA)
+            input()
             _exit(1)
 
         elif not self.usePotat and not self.twitchCredentialsSet():
-            input(Fore.MAGENTA + "Using twitch api, but at least one of the twitch credentials is not set.")
+            cprint("Using twitch api, but at least one of the twitch credentials is not set.", fore=Fore.MAGENTA)
+            input()
             _exit(1)
 
         
-        print(Fore.CYAN + "Loaded config")
+        cprint("Loaded config", fore=Fore.CYAN)
 
 
     
@@ -90,6 +104,7 @@ class Config:
             "clientSecret": self.clientSecret,
             "potatToken": self.potatToken,
             "usePotatApi": self.usePotat,
+            "printInColor": self.color,
             "farmingCommands": self.enabledCommands,
             "shopItems": self.enabledShopItems
         }
@@ -105,7 +120,7 @@ class Config:
         except Exception as e:
             logger.error("Failed to update config file", exc_info=e)
 
-            print(Style.BRIGHT + Fore.MAGENTA + "Failed to update config file. Please make an issue on github or contact lolspers on twitch if this issue persists.")
+            cprint("Failed to update config file. Please make an issue on github or contact lolspers on twitch if this issue persists.", fore=Fore.MAGENTA, style=Style.BRIGHT)
 
 
 
@@ -163,6 +178,20 @@ class Config:
 
         return True
     
+
+
+    def toggleColoredPrinting(self) -> bool:
+        self.color = not self.color
+
+        setPrintColors(self.color)
+
+        self.updateConfig()
+
+        logger.info("Toggled colored printing")
+
+        return self.color
+
+
 
 
     def updateTwitchTokens(self, accessToken: str, refreshToken: str) -> None:

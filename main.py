@@ -2,17 +2,14 @@
 import json
 import threading
 import queue
-import colorama
 
-colorama.init(autoreset=True)
-
-from colorama import Fore, Style
 from datetime import datetime
+from colorama import Fore, Style, Back
 from time import time, sleep, strftime
 
 import api
 from config import config
-from logger import logger
+from logger import logger, cprint, clprint
 from priceUtils import rankPrice
 
 
@@ -51,45 +48,51 @@ def inputs():
         elif uInput in allFarmingCommands:
             enabled = config.toggleCommand(uInput)
             
-            print(Fore.CYAN + f"{"Enabled" if enabled else "Disabled"} command '{uInput}'")
+            cprint(f"{"Enabled" if enabled else "Disabled"} command '{uInput}'", fore=Fore.CYAN)
 
 
         elif uInput in allShopItems:
             enabled = config.toggleCommand(uInput)
 
-            print(Fore.CYAN + f"{"Enabled" if enabled else "Disabled"} auto buying for '{uInput}'")
+            cprint(f"{"Enabled" if enabled else "Disabled"} auto buying for '{uInput}'", fore=Fore.CYAN)
 
 
         elif "twitch" in uInput:
             enabled = config.enableTwitch()
 
             if not enabled:
-                print(Fore.MAGENTA + "Cannot enable twitch api: A required twitch credential in is not set in the config!")
+                cprint("Cannot enable twitch api: A required twitch credential in is not set in the config!", fore=Fore.MAGENTA)
 
             else:
-                print(Fore.CYAN + "Switched to twitch messages")
+                cprint("Switched to twitch messages", fore=Fore.CYAN)
 
 
         elif uInput == "potat" or uInput == "potatbotat":
             enabled = config.enablePotat()
 
             if not enabled:
-                print(Fore.MAGENTA + "Cannot enable potat api: potatToken is not set in the config!")
+                cprint("Cannot enable potat api: potatToken is not set in the config!", fore=Fore.MAGENTA)
 
             else:
-                print(Fore.CYAN + "Switched to potat api")
+                cprint("Switched to potat api", fore=Fore.CYAN)
 
 
         elif uInput == "refresh":
             logger.info("User requested a cooldown refresh")
 
-            print(Fore.CYAN + "Refreshing cooldowns...")
+            cprint("Refreshing cooldowns...", fore=Fore.CYAN)
+
+
+        elif uInput == "color":
+            enabled = config.toggleColoredPrinting()
+
+            cprint(f"{"Enabled" if enabled else "Disabled"} printing in color", fore=Fore.CYAN)
 
 
         else:
             logger.debug(f"Invalid user command: {uInput}")
 
-            print(Fore.CYAN + f"Invalid command: '{uInput}'")
+            cprint(f"Invalid command: '{uInput}'", fore=Fore.YELLOW)
 
         print("\n")
 
@@ -100,23 +103,24 @@ inputThread.start()
 
 
 
-print(Style.DIM + "Type at any time to execute a command")
-print(Style.DIM + "Valid commands:")
-print(Style.DIM + Fore.GREEN + "'s': Stop the bot and close the program\n"
+cprint("Type at any time to execute a command", style=Style.DIM)
+cprint("Valid commands:", style=Style.DIM)
+cprint("'s': Stop the bot and close the program\n"
     "'potat': Change to potatbotat api\n"
-    "'twitch': Change to twitch api")
+    "'twitch': Change to twitch api", fore=Fore.GREEN, style=Style.DIM)
 
 
 longestFarmingCommand = len(max(allShopItems, key=len))
 for command in allFarmingCommands:
-    print(Style.DIM + Fore.GREEN + f"{f"'{command}': Toggle auto farming for {command}": <{longestFarmingCommand*2+20}} (Currently set to {config.isEnabled(command)})")
+    cprint(f"{f"'{command}': Toggle auto farming for {command}": <{longestFarmingCommand*2+20}} (Currently set to {config.isEnabled(command)})", fore=Fore.GREEN, style=Style.DIM)
 
 longestShopItem = len(max(allShopItems, key=len))
 for item in allShopItems:
-    print(Style.DIM + Fore.GREEN + f"{f"'{item}': Toggle auto buying from the shop for {item.split("shop-", 1)[1]}": <{longestShopItem*2+40}} (Currently set to {config.isEnabled(item)})")
+    cprint(f"{f"'{item}': Toggle auto buying from the shop for {item.split("shop-", 1)[1]}": <{longestShopItem*2+40}} (Currently set to {config.isEnabled(item)})", fore=Fore.GREEN, style=Style.DIM)
 
-print(Style.DIM + Fore.GREEN + "'refresh': Force refresh potatbotat cooldowns\n")
-print(Fore.GREEN + "Manual changes to config requires a restart to update\n")
+cprint("'refresh': Force refresh potatbotat cooldowns\n", fore=Fore.GREEN, style=Style.DIM)
+cprint("'color': Toggle printing in color\n", fore=Fore.GREEN, style=Style.DIM)
+cprint("Manual changes to config requires a restart to update\n", fore=Fore.GREEN)
 
 
 logger.debug("Started bot")
@@ -125,12 +129,13 @@ while True:
     try:
         if executions > 20:
             logger.warning("Hit client-side ratelimit")
-            print(Fore.RED + f"{strftime("%H:%M:%S")} Hit client-side ratelimit, paused for 1h until {datetime.fromtimestamp(time() + 3600).strftime("%H:%M:%S")} - commands will not work during this time")
+            cprint(f"{strftime("%H:%M:%S")} Hit client-side ratelimit, paused for 1h until {datetime.fromtimestamp(time() + 3600).strftime("%H:%M:%S")} - commands will not work during this time", fore=Fore.RED)
 
             executions = 0
             sleep(3600)
 
             logger.debug("Resumed bot")
+            cprint("Resumed", fore=Fore.CYAN, style=Style.DIM)
 
 
         if not uInputs.empty():
@@ -169,7 +174,7 @@ while True:
             cooldowns = potatoData["cooldowns"]
 
             logger.debug("Refreshed cooldowns")
-            print(Style.DIM + "Refreshed cooldowns\n")
+            cprint("Refreshed cooldowns\n", style=Style.DIM)
 
             executedCommand = False
 
@@ -178,19 +183,19 @@ while True:
                     ok, response = api.send("prestige")
 
                     if not ok:
-                        print(Style.DIM + Fore.RED + f"Failed to prestige: {response}")
+                        clprint("Failed to prestige", response, style=[Style.BRIGHT], globalFore=Fore.RED)
 
                     else:
-                        print(Fore.YELLOW + f"Successfully prestiged: {response}")
+                        clprint("Successfully prestiged:", response, style=[Style.BRIGHT], globalFore=Fore.YELLOW)
 
                 else:
                     ok, response = api.send("rankup")
 
                     if not ok:
-                        print(Style.DIM + Fore.RED + f"Failed to rank up: {response}")
+                        clprint("Failed to rank up:", response, style=[Style.BRIGHT], globalFore=Fore.RED)
 
                     else:
-                        print(Style.BRIGHT + Fore.YELLOW + f"Successfully ranked up: {response}")
+                        clprint("Successfully ranked up:", response, style=[Style.BRIGHT], globalFore=Fore.YELLOW)
                 
 
                 executedCommand = True
@@ -218,10 +223,10 @@ while True:
                 ok, response = api.send(cooldown)
 
                 if not ok:
-                    print(Fore.RED + f"Failed to execute command: {response}")
+                    clprint("Failed to execute command:", response, style=[Style.BRIGHT], globalFore=Fore.RED)
 
                 else:
-                    print(f"Executed command: {response}")
+                    clprint("Executed command:", response, style=[None, Style.DIM])
 
 
                 if cooldown == "cdr":
@@ -238,37 +243,37 @@ while True:
             # first execute the quiz in the targetted twitch chat
             # to not send "🥳 Thats right! Congratulations on getting the right answer, heres # potatoes!" in your own chat
             ok, response = api.twitchSend("quiz")
-            print(response if ok else Fore.RED + response)
+            cprint(response, fore=None if ok else Fore.RED)
             sleep(5)
 
             ok, quiz = api.potatSend("quiz", cdRetries=3)
 
             if not ok:
                 logger.warning(f"Failed to get quiz: {quiz}")
-                print(Fore.RED + f"Failed to get quiz: {quiz}")
+                clprint("Failed to get quiz:", quiz, style=[Style.BRIGHT], globalFore=Fore.RED)
                 continue
 
 
             # Example response:󠀀 ⚠️ You already have an existing quiz in progress! Here is the question in case you forgot: <quiz>
-            print(Style.DIM + f"Received quiz: {quiz}")
+            clprint("Received quiz:", quiz, style=[None, Style.DIM])
             answer = quizes.get(quiz, None)
 
             if answer is None:
                 logger.warning(f"No quiz anser found for quiz: {quiz}")
-                print(Fore.RED + f"No quiz answer found for quiz: {quiz}")
+                clprint("No quiz answer found for quiz:", quiz, style=[Style.BRIGHT], globalFore=Fore.RED)
                 continue
             
 
-            print(Style.DIM + f"Found quiz answer: {answer}")
+            clprint("Found quiz answer:", answer, style=[Style.BRIGHT])
 
             sleep(5) # small cooldown to be safe
             ok, response = api.twitchSend(f"{answer}", prefix=False)
 
             if not ok:
-                print(Fore.RED + f"Failed to answer quiz: {response}")
+                clprint("Failed to answer quiz:", response, style=[None, Style.DIM])
             
             else:
-                print(Style.DIM + Fore.GREEN + f"Answered quiz: {response}")
+                clprint("Answered quiz:", response, style=[None, Style.DIM], globalFore=Fore.GREEN)
 
 
             if shopCooldowns.get("shop-quiz", time()+10) < time():
@@ -289,14 +294,15 @@ while True:
 
     except api.stopBot as e:
         logger.critical(f"Stopped bot: {e}")
-        print(Style.BRIGHT + Fore.MAGENTA + f"Stopped bot: {e}")
+        clprint("Stopped bot:", e, style=[Style.BRIGHT, None], globalFore=Fore.MAGENTA)
 
-        input(Style.DIM + "Press enter to exit.")
+        cprint("Press enter to exit.", style=Style.DIM)
+        input()
 
 
     except Exception as e:
         executions += 1
-        print(Style.DIM + Fore.RED + f"ERROR: {e}")
+        clprint("Error:", e, style=[Style.BRIGHT], globalFore=Fore.RED)
 
         logger.error(f"Caught exception in main", exc_info=e)
 

@@ -1,10 +1,12 @@
-import colorama
 import requests
 import json
 
 from colorama import Fore, Style
 
-colorama.init(autoreset=True)
+from logger import cprint, setPrintColors
+
+
+setPrintColors(True)
 
 
 
@@ -60,55 +62,71 @@ except FileNotFoundError:
 
 print()
 
-if config.get("potatToken") and input(Fore.YELLOW + "You already have a potatbotat token set, do you want to update it? (y/n) ").lower() != "y": pass
+if config.get("potatToken") and input(Fore.YELLOW + "You already have a potatbotat token set, do you want to update it? (y/n) " + Style.NORMAL).lower() != "y": pass
 else:
     print("Copy your potatbotat token on https://potat.app > f12 > storage > local storage > https://potat.app > authorization")
-    potatToken = input(Style.DIM + "PotatBotat token: " + Style.NORMAL)
+    cprint("PotatBotat token:", style=Style.DIM)
+    potatToken = input()
 
     config.update({"potatToken": potatToken})
 
 
 
-if config.get("twitchToken") and config.get("clientId") and config.get("refreshToken") and config.get("clientSecret") and input(Fore.YELLOW + "You already have twitch token details set, do you want to update them? (y/n) ").lower() != "y": pass
+if config.get("twitchToken") and config.get("clientId") and config.get("refreshToken") and config.get("clientSecret") and input(Fore.YELLOW + "\n\nYou already have twitch token details set, do you want to update them? (y/n) " + Fore.RESET).lower() != "y": pass
 else:
-    print("\nOn https://dev.twitch.tv/console/apps go to your application")
+    print("\n\nOn https://dev.twitch.tv/console/apps go to your application")
     print("Under the name copy one of the OAuth Redirect URLs")
 
-    redirect = input(Style.DIM + "Redirect URL: " + Style.NORMAL)
+    cprint("Redirect URI:", style=Style.DIM)
+    redirect = input()
 
 
     print("\nScroll down and click on 'New Secret'")
 
-    secret = input(Style.DIM + "Client secret: "+ Style.NORMAL).strip().lower()
+    cprint("Client secret:", style=Style.DIM)
+    secret = input("Client secret: ").strip()
+
 
     if len(secret) != 30:
         while len(secret) != 30:
-            print(Fore.RED + "Invalid client secret")
-            secret = input(Style.DIM + "Client secret: " + Style.NORMAL).strip().lower()
+            cprint("Invalid client secret", fore=Fore.RED)
+            cprint("Client secret:", style=Style.DIM)
+            secret = input("Client secret: ").strip()
+
+    secret = secret.lower()
     
 
     print("\nAbove the secret copy the Client ID")
 
-    clientId = input(Style.DIM + "Client ID: " + Style.NORMAL)
+    cprint("Client ID:", style=Style.DIM)
+    clientId = input().strip()
 
     if len(clientId) != 30:
         while len(clientId) != 30:
-            print(Fore.RED + "Invalid client id")
-            clientId = input(Style.DIM + "Client ID: " + Style.NORMAL).strip().lower()
+            cprint("\nInvalid client id", fore=Fore.RED)
+            cprint("Client ID:", style=Style.DIM)
+            clientId = input().strip()
+    
+    clientId = clientId.lower()
     
 
     print(f"\nGo to https://id.twitch.tv/oauth2/authorize?response_type=code&client_id={clientId}&redirect_uri={redirect}&scope=user:write:chat")
     print("From the URL bar copy the code in between 'code=' and '&scope'")
 
-    code = input(Style.DIM + "Code: "+ Style.NORMAL).strip().lower()
+    cprint("Code:", style=Style.DIM)
+    code = input().strip()
 
     if len(code) != 30:
         while len(code) != 30:
-            print(Fore.RED + "Invalid code")
-            code = input(Style.DIM + "Code: " + Style.NORMAL).strip().lower()
+            cprint("\nInvalid code", fore=Fore.RED)
+            cprint("Code:", style=Style.DIM)
+            code = input().strip()
+
+
+    code = code.lower()
     
 
-    print(Fore.CYAN + "\nGenerating token...")
+    cprint("\nGenerating token...", fore=Fore.CYAN)
     result = getTokenDetails(code, secret, redirect, clientId)
 
     print(result)
@@ -117,20 +135,24 @@ else:
         with open("config.json", "w") as file:
             json.dump(config, file, indent=4)
             
-            print(Fore.GREEN + "Updated config")
+            cprint("Updated config", fore=Fore.GREEN)
 
-        input(Style.DIM + "\nPress enter to exit" + Style.NORMAL)
+        cprint("\nPress enter to exit...", style=Style.DIM)
+        input()
 
 
 
-if config.get("username") and config.get("userId") and config.get("channelId") and input(Fore.YELLOW + "You already have you username and channel set, do you want to update them? (y/n) ") != "y": pass
+if config.get("username") and config.get("userId") and config.get("channelId") and input(Fore.YELLOW + "You already have you username and channel set, do you want to update them? (y/n) " + Fore.RESET) != "y": pass
 else:
-    username = input(Style.DIM + "\nYour twitch username: " + Style.NORMAL).strip().replace("#", "", 1).replace("@", "", 1).lower()
-    channel = input(Style.DIM + "Channel you want to farm in: " + Style.NORMAL).strip().replace("#", "", 1).replace("@", "", 1).lower()
+    cprint("\n\nYour twitch username:", style=Style.DIM)
+    username = input().strip().replace("#", "", 1).replace("@", "", 1).lower()
+
+    cprint("\nChannel you want to farm in:", style=Style.DIM)
+    channel = input().strip().replace("#", "", 1).replace("@", "", 1).lower()
 
     userIds = getUserIds([username, channel])
     if not isinstance(userIds, dict):
-        print(Style.DIM + Fore.BLUE + userIds + Style.NORMAL)
+        cprint(userIds, fore=Fore.BLUE, style=Style.DIM)
 
     else:
         config.update({"username": username})
@@ -142,6 +164,8 @@ else:
 with open("config.json", "w") as file:
     json.dump(config, file, indent=4)
     
-    print(Fore.GREEN + "Successfully updated config")
+    cprint("Successfully updated config", fore=Fore.GREEN)
 
-input(Style.DIM + "\nPress enter to exit")
+
+cprint("\nPress enter to exit", style=Style.DIM)
+input()

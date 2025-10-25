@@ -9,6 +9,7 @@
     "refreshToken": "",
     "clientSecret": "",
     "potatToken": "",
+    "printInColor": true,
     "usePotatApi": false,
     "farmingCommands": {
         "potato": true,
