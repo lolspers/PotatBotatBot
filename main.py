@@ -9,7 +9,7 @@ from time import time, sleep, strftime
 
 import api
 from config import config
-from logger import logger, cprint, clprint, killProgram
+from logger import logger, cprint, clprint, dprint, killProgram
 from utils import rankPrice, relative
 
 
@@ -102,31 +102,31 @@ inputThread.start()
 
 
 
-cprint("\nType at any time to execute a command")
-cprint("Valid commands:")
+cprint("\nType at any time to execute a command", date=False)
+cprint("Valid commands:", date=False)
 cprint("'s': Stop the bot and close the program\n"
     "'potat': Change to potatbotat api\n"
-    "'twitch': Change to twitch api", style=Style.DIM)
+    "'twitch': Change to twitch api", style=Style.DIM, date=False)
 print()
 
 
 longestFarmingCommand = len(max(allShopItems, key=len))
 
 for command in allFarmingCommands:
-    cprint(f"{f"'{command}': Toggle auto farming for {command}": <{longestFarmingCommand*2+20}} (Currently set to {config.isEnabled(command)})", style=Style.DIM)
+    cprint(f"{f"'{command}': Toggle auto farming for {command}": <{longestFarmingCommand*2+20}} (Currently set to {config.isEnabled(command)})", style=Style.DIM, date=False)
 
 print()
 
 longestShopItem = len(max(allShopItems, key=len))
 
 for item in allShopItems:
-    cprint(f"{f"'{item}': Toggle auto buying from the shop for {item.split("shop-", 1)[1]}": <{longestShopItem*2+40}} (Currently set to {config.isEnabled(item)})", style=Style.DIM)
+    cprint(f"{f"'{item}': Toggle auto buying from the shop for {item.split("shop-", 1)[1]}": <{longestShopItem*2+40}} (Currently set to {config.isEnabled(item)})", style=Style.DIM, date=False)
 
 
 print()
-cprint("'refresh': Force refresh potatbotat cooldowns\n", style=Style.DIM)
-cprint("'color': Toggle printing in color\n", style=Style.DIM)
-cprint("Manual changes to config requires a restart to update\n\n", style=Style.DIM)
+cprint("'refresh': Force refresh potatbotat cooldowns\n", style=Style.DIM, date=False)
+cprint("'color': Toggle printing in color\n", style=Style.DIM, date=False)
+cprint("Manual changes to config requires a restart to update\n\n", style=Style.DIM, date=False)
 
 
 
@@ -167,12 +167,13 @@ while True:
             shopCooldowns = api.getShopCooldowns()
             boughtShopItem = False
 
-            print("\nRefreshed shop cooldowns")
+            print()
+            dprint("Refreshed shop cooldowns")
 
             for item, cooldown in shopCooldowns.items():
                 readyIn = relative(cooldown - time())
 
-                cprint(f"{item}: {readyIn}", style=Style.DIM if "in" in readyIn else None)
+                cprint(f"{item}: {readyIn}", style=Style.DIM if "in" in readyIn else None, date=False)
 
             print()
 
@@ -189,13 +190,13 @@ while True:
 
             cooldowns: dict[str, int] = potatoData["cooldowns"]
 
-
-            print("\nRefreshed cooldowns")
+            print()
+            dprint("Refreshed cooldowns")
 
             for command, cooldown in cooldowns.items():
                 readyIn = relative(cooldown - time())
 
-                cprint(f"{command}: {readyIn}", style=Style.DIM if "in" in readyIn else None)
+                cprint(f"{command}: {readyIn}", style=Style.DIM if "in" in readyIn else None, date=False)
 
             print()
             
@@ -247,10 +248,10 @@ while True:
                 ok, response = api.send(cooldown)
 
                 if not ok:
-                    clprint("\nFailed to execute command:", response, style=[Style.BRIGHT], globalFore=Fore.RED)
+                    clprint("Failed to execute command:", response, style=[Style.BRIGHT], globalFore=Fore.RED)
 
                 else:
-                    clprint("\nExecuted command:", response, style=[None, Style.DIM])
+                    clprint("Executed command:", response, style=[None, Style.DIM])
 
 
                 if cooldown == "cdr":
@@ -274,7 +275,7 @@ while True:
 
             if not ok:
                 logger.warning(f"Failed to get quiz: {quiz}")
-                clprint("\nFailed to get quiz:", quiz, style=[Style.BRIGHT], globalFore=Fore.RED)
+                clprint("Failed to get quiz:", quiz, style=[Style.BRIGHT], globalFore=Fore.RED)
                 continue
 
 
@@ -284,7 +285,7 @@ while True:
 
             if answer is None:
                 logger.warning(f"No quiz anser found for quiz: {quiz}")
-                clprint("\nNo quiz answer found for quiz:", quiz, style=[Style.BRIGHT], globalFore=Fore.RED)
+                clprint("No quiz answer found for quiz:", quiz, style=[Style.BRIGHT], globalFore=Fore.RED)
                 continue
             
 
@@ -318,14 +319,15 @@ while True:
 
     except api.stopBot as e:
         logger.critical(f"Stopped bot: {e}")
-        clprint("\n\nStopped bot:", str(e), style=[Style.BRIGHT, None], globalFore=Fore.MAGENTA)
+        print("\n")
+        clprint("Stopped bot:", str(e), style=[Style.BRIGHT, None], globalFore=Fore.MAGENTA)
 
         killProgram()
 
 
     except Exception as e:
         executions += 1
-        clprint(f"\n{type(e).__name__}:", str(e), style=[Style.BRIGHT], globalFore=Fore.RED)
+        clprint(f"{type(e).__name__}:", str(e), style=[Style.BRIGHT], globalFore=Fore.RED)
 
         logger.error(f"Caught exception in main", exc_info=e)
 
