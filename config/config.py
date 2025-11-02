@@ -2,7 +2,7 @@ import json
 
 from colorama import Fore, Style, Back
 
-from logger import logger, cprint, clprint, setPrintColors, setPrintDates, killProgram
+from logger import logger, cprint, clprint, setPrintColors, setPrintTime, killProgram
 
 
 filePath = "config.json"
@@ -38,10 +38,10 @@ class Config:
 
         try:
             self.color: bool = bool(data.get("printInColor"))
-            self.dates: bool = bool(data.get("printDates"))
+            self.time: bool = bool(data.get("printTime"))
 
             setPrintColors(self.color)
-            setPrintDates(self.dates)
+            setPrintTime(self.time)
 
 
             self.username: str = data["username"]
@@ -207,16 +207,16 @@ class Config:
     
 
 
-    def toggleDatePrinting(self) -> bool:
-        self.dates = not self.dates
+    def toggleTimePrinting(self) -> bool:
+        self.time = not self.time
 
-        setPrintDates(self.dates)
+        setPrintTime(self.time)
 
         self.updateConfig()
 
-        logger.info("Toggled date printing")
+        logger.info("Toggled time printing")
 
-        return self.dates
+        return self.time
 
 
 

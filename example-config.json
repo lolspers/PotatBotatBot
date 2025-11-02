@@ -10,7 +10,7 @@
     "clientSecret": "",
     "potatToken": "",
     "printInColor": true,
-    "printDates": true,
+    "printTime": true,
     "usePotatApi": false,
     "farmingCommands": {
         "potato": true,

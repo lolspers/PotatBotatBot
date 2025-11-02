@@ -9,7 +9,7 @@ from time import time, sleep, strftime
 
 import api
 from config import config
-from logger import logger, cprint, clprint, dprint, killProgram
+from logger import logger, cprint, clprint, tprint, killProgram
 from utils import rankPrice, relative
 
 
@@ -88,6 +88,12 @@ def inputs():
             cprint(f"{"Enabled" if enabled else "Disabled"} printing in color", fore=Fore.CYAN)
 
 
+        elif uInput == "time":
+            enabled = config.toggleTimePrinting()
+
+            cprint(f"{"Enabled" if enabled else "Disabled"} printing time", fore=Fore.CYAN)
+
+
         else:
             logger.debug(f"Invalid user command: {uInput}")
 
@@ -102,31 +108,32 @@ inputThread.start()
 
 
 
-cprint("\nType at any time to execute a command", date=False)
-cprint("Valid commands:", date=False)
+cprint("\nType at any time to execute a command", time=False)
+cprint("Valid commands:", time=False)
 cprint("'s': Stop the bot and close the program\n"
     "'potat': Change to potatbotat api\n"
-    "'twitch': Change to twitch api", style=Style.DIM, date=False)
+    "'twitch': Change to twitch api", style=Style.DIM, time=False)
 print()
 
 
 longestFarmingCommand = len(max(allShopItems, key=len))
 
 for command in allFarmingCommands:
-    cprint(f"{f"'{command}': Toggle auto farming for {command}": <{longestFarmingCommand*2+20}} (Currently set to {config.isEnabled(command)})", style=Style.DIM, date=False)
+    cprint(f"{f"'{command}': Toggle auto farming for {command}": <{longestFarmingCommand*2+20}} (Currently set to {config.isEnabled(command)})", style=Style.DIM, time=False)
 
 print()
 
 longestShopItem = len(max(allShopItems, key=len))
 
 for item in allShopItems:
-    cprint(f"{f"'{item}': Toggle auto buying from the shop for {item.split("shop-", 1)[1]}": <{longestShopItem*2+40}} (Currently set to {config.isEnabled(item)})", style=Style.DIM, date=False)
+    cprint(f"{f"'{item}': Toggle auto buying from the shop for {item.split("shop-", 1)[1]}": <{longestShopItem*2+40}} (Currently set to {config.isEnabled(item)})", style=Style.DIM, time=False)
 
 
 print()
-cprint("'refresh': Force refresh potatbotat cooldowns\n", style=Style.DIM, date=False)
-cprint("'color': Toggle printing in color\n", style=Style.DIM, date=False)
-cprint("Manual changes to config requires a restart to update\n\n", style=Style.DIM, date=False)
+cprint("'refresh': Force refresh potatbotat cooldowns\n", style=Style.DIM, time=False)
+cprint("'color': Toggle printing in color\n", style=Style.DIM, time=False)
+cprint("'time': Toggle printing time\n", style=Style.DIM, time=False)
+cprint("Manual changes to config requires a restart to update\n\n", style=Style.DIM, time=False)
 
 
 
@@ -168,12 +175,12 @@ while True:
             boughtShopItem = False
 
             print()
-            dprint("Refreshed shop cooldowns")
+            tprint("Refreshed shop cooldowns")
 
             for item, cooldown in shopCooldowns.items():
                 readyIn = relative(cooldown - time())
 
-                cprint(f"{item}: {readyIn}", style=Style.DIM if "in" in readyIn else None, date=False)
+                cprint(f"{item}: {readyIn}", style=Style.DIM if "in" in readyIn else None, time=False)
 
             print()
 
@@ -191,12 +198,12 @@ while True:
             cooldowns: dict[str, int] = potatoData["cooldowns"]
 
             print()
-            dprint("Refreshed cooldowns")
+            tprint("Refreshed cooldowns")
 
             for command, cooldown in cooldowns.items():
                 readyIn = relative(cooldown - time())
 
-                cprint(f"{command}: {readyIn}", style=Style.DIM if "in" in readyIn else None, date=False)
+                cprint(f"{command}: {readyIn}", style=Style.DIM if "in" in readyIn else None, time=False)
 
             print()
             

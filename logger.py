@@ -18,7 +18,7 @@ logger.setLevel(30)
 colorama.init(autoreset=True)
 
 printColors: bool = True
-printDates: bool = True
+printTime: bool = True
 
 
 
@@ -28,16 +28,16 @@ def setPrintColors(enable: bool) -> None:
     printColors = enable
 
 
-def setPrintDates(enable: bool) -> None:
-    global printDates
+def setPrintTime(enable: bool) -> None:
+    global printTime
 
-    printDates = enable
+    printTime = enable
 
 
 
-def dprint(*values, date: bool = True):
-    if printDates and date:
-        dt = datetime.now().strftime("[%m-%d %H:%M:%S]")
+def tprint(*values, time: bool = True):
+    if printTime and time:
+        dt = datetime.now().strftime("[%H:%M:%S]")
 
         if printColors:
             dt = colorama.Style.DIM + dt
@@ -48,7 +48,7 @@ def dprint(*values, date: bool = True):
 
 
 
-def cprint(text, fore: str | None = None, style: str | None = None, back: str | None = None, date: bool = True):
+def cprint(text, fore: str | None = None, style: str | None = None, back: str | None = None, time: bool = True):
     if printColors:
         ansi = ""
 
@@ -64,11 +64,11 @@ def cprint(text, fore: str | None = None, style: str | None = None, back: str | 
         text = ansi + str(text)
     
     
-    dprint(text, date=date)
+    tprint(text, time=time)
 
 
 
-def clprint(*values, fore: list[str | None] | None = None, style: list[str | None] | None = None, back: list[str | None] | None = None, globalFore: str = "", globalStyle: str = "", globalBack: str = "", date: bool = True):
+def clprint(*values, fore: list[str | None] | None = None, style: list[str | None] | None = None, back: list[str | None] | None = None, globalFore: str = "", globalStyle: str = "", globalBack: str = "", time: bool = True):
     if printColors:
         values = list(values)
 
@@ -89,12 +89,12 @@ def clprint(*values, fore: list[str | None] | None = None, style: list[str | Non
             values = [globalAnsi + str(value) for value in values]
     
 
-    dprint(*values, date=True)
+    tprint(*values, time=time)
 
 
 
 def killProgram() -> None:
-    cprint("\nPress enter to exit...", style=colorama.Style.DIM, date=False)
+    cprint("\nPress enter to exit...", style=colorama.Style.DIM, time=False)
 
     input()
 

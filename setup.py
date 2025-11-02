@@ -3,10 +3,11 @@ import json
 
 from colorama import Fore, Style
 
-from logger import cprint, setPrintColors, killProgram
+from logger import cprint, setPrintColors, setPrintTime, killProgram
 
 
 setPrintColors(True)
+setPrintTime(False)
 
 
 
