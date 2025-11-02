@@ -309,14 +309,14 @@ while True:
 
     except api.stopBot as e:
         logger.critical(f"Stopped bot: {e}")
-        clprint("Stopped bot:", e, style=[Style.BRIGHT, None], globalFore=Fore.MAGENTA)
+        clprint("Stopped bot:", str(e), style=[Style.BRIGHT, None], globalFore=Fore.MAGENTA)
 
         killProgram()
 
 
     except Exception as e:
         executions += 1
-        clprint("Error:", e, style=[Style.BRIGHT], globalFore=Fore.RED)
+        clprint("Error:", str(e), style=[Style.BRIGHT], globalFore=Fore.RED)
 
         logger.error(f"Caught exception in main", exc_info=e)
 

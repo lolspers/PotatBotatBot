@@ -69,7 +69,7 @@ def clprint(*values, fore: list[str | None] | None = None, style: list[str | Non
     globalAnsi = globalFore + globalStyle + globalBack
 
     if globalAnsi:
-        values = [globalAnsi + value for value in values]
+        values = [globalAnsi + str(value) for value in values]
 
     print(*values)
 
