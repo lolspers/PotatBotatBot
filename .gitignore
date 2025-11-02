@@ -2,3 +2,5 @@ config.json
 logs.txt
 logs.log
 __pycache__/
+prestigeStats.json
+decodeError/

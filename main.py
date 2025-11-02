@@ -11,6 +11,7 @@ import api
 from config import config
 from logger import logger, cprint, clprint, tprint, killProgram
 from utils import rankPrice, relative
+from prestige import updatePrestigeStats
 
 
 with open("quizes.json", "r") as file:
@@ -82,6 +83,16 @@ def inputs():
             cprint("Refreshing cooldowns...", fore=Fore.CYAN)
 
 
+        elif uInput == "stats":
+            result = updatePrestigeStats()
+
+            if result.get("error"):
+                clprint("Failed to update prestige stats:", result["error"], style=[Style.BRIGHT], globalFore=Fore.RED)
+
+            else:
+                cprint("Updated prestige stats", fore=Fore.GREEN, style=Style.DIM)
+
+
         elif uInput == "color":
             enabled = config.toggleColoredPrinting()
 
@@ -131,6 +142,7 @@ for item in allShopItems:
 
 print()
 cprint("'refresh': Force refresh potatbotat cooldowns\n", style=Style.DIM, time=False)
+cprint("'stats': Manually update prestige stats for the current prestige (if they do not exist yet)", style=Style.DIM, time=False)
 cprint("'color': Toggle printing in color\n", style=Style.DIM, time=False)
 cprint("'time': Toggle printing time\n", style=Style.DIM, time=False)
 cprint("Manual changes to config requires a restart to update\n\n", style=Style.DIM, time=False)
@@ -219,6 +231,15 @@ while True:
 
                     else:
                         clprint("Successfully prestiged:", response, style=[Style.BRIGHT], globalFore=Fore.YELLOW)
+
+                        result = updatePrestigeStats()
+
+                        if result.get("error"):
+                            clprint("Failed to update prestige stats:", result["error"], style=[Style.BRIGHT], globalFore=Fore.RED)
+
+                        else:
+                            cprint("Updated prestige stats", fore=Fore.GREEN, style=Style.DIM)
+                        
 
                 else:
                     ok, response = api.send("rankup")

@@ -134,10 +134,11 @@ def getTwitchUser(uid: str) -> dict:
 def getPotatUser(username: str) -> dict:
     response = requests.get(potatApi + f"users/{username}")
 
-    if response.status_code != 200:
-        raise Exception(f"Failed to get potat user data ({response.status_code}): {response.json()}")
-
     data = response.json()
+
+
+    if response.status_code != 200 or data.get("statusCode") != 200:
+        raise Exception(f"Failed to get potat user data ({response.status_code}/{data.get("statusCode")}): {data}")
 
     return data["data"][0]
 
