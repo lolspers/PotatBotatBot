@@ -125,16 +125,27 @@ class Config:
 
 
 
-    def isEnabled(self, command: str) -> bool:
-        if command.startswith("shop-"):
-            return self.enabledShopItems[command]
+    def isEnabled(self, command: str) -> bool | None:
+        try:
+            if command.startswith("shop-"):
+                return self.enabledShopItems[command]
+            
+            return self.enabledCommands[command]
         
-        return self.enabledCommands[command]
+        except KeyError as e:
+            logger.warning("Config: Invalid command specified in isEnabled", exc_info=e)
+
+            return None
     
 
 
     def toggleCommand(self, command: str) -> bool:
-        enable = not self.isEnabled(command)
+        enabled = self.isEnabled(command)
+        enable = not enabled
+
+        if enabled is None:
+            return False
+        
 
         if command.startswith("shop-"):
             self.enabledShopItems[command] = enable
