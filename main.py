@@ -39,7 +39,8 @@ def inputs():
         uInputs.put(uInput)
 
         if uInput == "s":
-            logger.info("Stopped input loop by users request")
+            logger.info("Stopped by users request")
+            
             break
 
 
@@ -101,24 +102,32 @@ inputThread.start()
 
 
 
-cprint("Type at any time to execute a command", style=Style.DIM)
-cprint("Valid commands:", style=Style.DIM)
+cprint("\nType at any time to execute a command")
+cprint("Valid commands:")
 cprint("'s': Stop the bot and close the program\n"
     "'potat': Change to potatbotat api\n"
-    "'twitch': Change to twitch api", fore=Fore.GREEN, style=Style.DIM)
+    "'twitch': Change to twitch api", style=Style.DIM)
+print()
 
 
 longestFarmingCommand = len(max(allShopItems, key=len))
+
 for command in allFarmingCommands:
-    cprint(f"{f"'{command}': Toggle auto farming for {command}": <{longestFarmingCommand*2+20}} (Currently set to {config.isEnabled(command)})", fore=Fore.GREEN, style=Style.DIM)
+    cprint(f"{f"'{command}': Toggle auto farming for {command}": <{longestFarmingCommand*2+20}} (Currently set to {config.isEnabled(command)})", style=Style.DIM)
+
+print()
 
 longestShopItem = len(max(allShopItems, key=len))
-for item in allShopItems:
-    cprint(f"{f"'{item}': Toggle auto buying from the shop for {item.split("shop-", 1)[1]}": <{longestShopItem*2+40}} (Currently set to {config.isEnabled(item)})", fore=Fore.GREEN, style=Style.DIM)
 
-cprint("'refresh': Force refresh potatbotat cooldowns\n", fore=Fore.GREEN, style=Style.DIM)
-cprint("'color': Toggle printing in color\n", fore=Fore.GREEN, style=Style.DIM)
-cprint("Manual changes to config requires a restart to update\n", fore=Fore.GREEN)
+for item in allShopItems:
+    cprint(f"{f"'{item}': Toggle auto buying from the shop for {item.split("shop-", 1)[1]}": <{longestShopItem*2+40}} (Currently set to {config.isEnabled(item)})", style=Style.DIM)
+
+
+print()
+cprint("'refresh': Force refresh potatbotat cooldowns\n", style=Style.DIM)
+cprint("'color': Toggle printing in color\n", style=Style.DIM)
+cprint("Manual changes to config requires a restart to update\n\n", style=Style.DIM)
+
 
 
 logger.debug("Started bot")
@@ -127,7 +136,7 @@ while True:
     try:
         if executions > 20:
             logger.warning("Hit client-side ratelimit")
-            cprint(f"{strftime("%H:%M:%S")} Hit client-side ratelimit, paused for 1h until {datetime.fromtimestamp(time() + 3600).strftime("%H:%M:%S")} - commands will not work during this time", fore=Fore.RED)
+            cprint(f"({strftime("%H:%M:%S")}) Hit client-side ratelimit, paused for 1h until {datetime.fromtimestamp(time() + 3600).strftime("%H:%M:%S")} - commands will not work during this time", fore=Fore.RED)
 
             executions = 0
             sleep(3600)
@@ -158,10 +167,10 @@ while True:
             shopCooldowns = api.getShopCooldowns()
             boughtShopItem = False
 
-            print("Refreshed shop cooldowns")
+            print("\nRefreshed shop cooldowns")
 
             for item, cooldown in shopCooldowns.items():
-                readyIn = relative(cooldown)
+                readyIn = relative(cooldown - time())
 
                 cprint(f"{item}: {readyIn}", style=Style.DIM if "in" in readyIn else None)
 
@@ -181,10 +190,10 @@ while True:
             cooldowns: dict[str, int] = potatoData["cooldowns"]
 
 
-            print("Refreshed cooldowns")
+            print("\nRefreshed cooldowns")
 
             for command, cooldown in cooldowns.items():
-                readyIn = relative(cooldown)
+                readyIn = relative(cooldown - time())
 
                 cprint(f"{command}: {readyIn}", style=Style.DIM if "in" in readyIn else None)
 
@@ -238,10 +247,10 @@ while True:
                 ok, response = api.send(cooldown)
 
                 if not ok:
-                    clprint("Failed to execute command:", response, style=[Style.BRIGHT], globalFore=Fore.RED)
+                    clprint("\nFailed to execute command:", response, style=[Style.BRIGHT], globalFore=Fore.RED)
 
                 else:
-                    clprint("Executed command:", response, style=[None, Style.DIM])
+                    clprint("\nExecuted command:", response, style=[None, Style.DIM])
 
 
                 if cooldown == "cdr":
@@ -265,7 +274,7 @@ while True:
 
             if not ok:
                 logger.warning(f"Failed to get quiz: {quiz}")
-                clprint("Failed to get quiz:", quiz, style=[Style.BRIGHT], globalFore=Fore.RED)
+                clprint("\nFailed to get quiz:", quiz, style=[Style.BRIGHT], globalFore=Fore.RED)
                 continue
 
 
@@ -275,7 +284,7 @@ while True:
 
             if answer is None:
                 logger.warning(f"No quiz anser found for quiz: {quiz}")
-                clprint("No quiz answer found for quiz:", quiz, style=[Style.BRIGHT], globalFore=Fore.RED)
+                clprint("\nNo quiz answer found for quiz:", quiz, style=[Style.BRIGHT], globalFore=Fore.RED)
                 continue
             
 
@@ -309,15 +318,18 @@ while True:
 
     except api.stopBot as e:
         logger.critical(f"Stopped bot: {e}")
-        clprint("Stopped bot:", str(e), style=[Style.BRIGHT, None], globalFore=Fore.MAGENTA)
+        clprint("\n\nStopped bot:", str(e), style=[Style.BRIGHT, None], globalFore=Fore.MAGENTA)
 
         killProgram()
 
 
     except Exception as e:
         executions += 1
-        clprint("Error:", str(e), style=[Style.BRIGHT], globalFore=Fore.RED)
+        clprint(f"\n{type(e).__name__}:", str(e), style=[Style.BRIGHT], globalFore=Fore.RED)
 
         logger.error(f"Caught exception in main", exc_info=e)
 
         sleep(5)
+
+
+killProgram()

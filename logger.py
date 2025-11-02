@@ -51,6 +51,7 @@ def cprint(text, fore: str | None = None, style: str | None = None, back: str | 
 def clprint(*values, fore: list[str | None] | None = None, style: list[str | None] | None = None, back: list[str | None] | None = None, globalFore: str = "", globalStyle: str = "", globalBack: str = ""):
     if not printColors:
         print(*values)
+        return
     
     
     values = list(values)

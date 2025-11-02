@@ -13,6 +13,13 @@ potatApi = "https://api.potat.app/"
 
 lastChannelPrefixCheck = 0
 
+unitToSeconds = {
+    "s": 1, 
+    "m": 60, 
+    "h": 3600, 
+    "d": 86400
+}
+
 
 class stopBot(Exception):
     pass
@@ -91,7 +98,7 @@ def twitchSend(message: str, prefix: bool = True) -> tuple[bool, str]:
 
     if data["data"][0]["is_sent"] is True:
         logger.debug(f"Sent twitch message: {message}")
-        return (True, f"Successfully sent twitch message: '{message}'")
+        return (True, message)
 
 
     logger.warning(f"Twitch message dropped: {data}")
@@ -207,11 +214,13 @@ def potatSend(message: str, cdRetries: int = 0) -> tuple[bool, str]:
             raise stopBot("Invalid PotatBotat token")
         
         elif response.status_code == 404:
-            if data.get("errors", [{}])[0].get("message") == "Command invocation didn't return any result.":
-                checkChannelPrefix()
+            errors = data.get("errors")
+
+            if errors and errors[0].get("message") == "Command invocation didn't return any result.":
+                checkUserPrefix()
 
 
-        logger.error(f"Failed to execute command ({response.status_code}): {data}")
+        logger.error(f"Failed to execute command '{message}' ({response.status_code}): {data}")
         return (False, f"{data} {response.status_code}")
     
 
@@ -253,14 +262,14 @@ def potatSend(message: str, cdRetries: int = 0) -> tuple[bool, str]:
     if " (You have five minutes to answer correctly, time starts now!)" in result:
         return (True, result.replace(" (You have five minutes to answer correctly, time starts now!)", ""))
 
-    return (True, f"Executed command: '{message}': {result}")
+    return (True, f"{message} - {result}")
 
 
 
 def getPotatoData() -> dict:
     data = getPotatUser(config.username)
 
-    potatoData = data[0]["potatoes"]
+    potatoData = data["potatoes"]
 
     potatoes = potatoData["count"]
     rank = potatoData["rank"]
@@ -298,15 +307,18 @@ def getShopCooldowns() -> dict[str, float]:
     if not ok:
         raise Exception(f"Failed to get shop cooldowns: {result}")
     
-    # Example message: Potato: 28m and 23s ● Cooldown: ✅ ● Trample: ✅ ● Steal: 1h and 48m ● Eat: 26m and 12s ● Quiz: 41m and 54s ● Shop-Quiz: ✅ ● Shop-Cdr: 15h and 53m ● Shop-Fertilizer: ✅ ● Shop-Guard: ✅
 
-    rawCooldowns = result.split(": ", 2)[2].replace("✅", "0s").lower()
-    potatCooldowns = {}
-    unitToSeconds = {"s": 1, "m": 60, "h": 3600, "d": 86400}
+    rawCooldowns = result.split(": ", 2)[2].replace("\u2705", "0s").lower()
 
-    [potatCooldowns.update({cooldown.split(": ", 1)[0]: cooldown.split(": ", 1)[1]}) for cooldown in rawCooldowns.split(" ● ")]
+    potatCooldowns = {
+        cooldown.split(": ", 1)[0]: cooldown.split(": ", 1)[1]
+        for cooldown in rawCooldowns.split(" ● ")
+        if cooldown.startswith("shop-")
+    }
+    
 
     shopCooldowns = {}
+
     for command in potatCooldowns:
         if not config.isEnabled(command):
             continue
@@ -316,10 +328,11 @@ def getShopCooldowns() -> dict[str, float]:
 
         for cooldown in cooldowns:
             if not "s" in cooldown:
-                readyIn += 60 # status rounds minutes down
+                readyIn += 60 # status rounds down
+
             readyIn += int(cooldown[:-1]) * unitToSeconds[cooldown[-1]]
 
-        shopCooldowns[command] = readyIn
+        shopCooldowns.update({command: readyIn})
 
 
     logger.debug(f"New shop cooldowns: {shopCooldowns}")

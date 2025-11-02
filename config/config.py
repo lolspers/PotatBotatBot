@@ -88,7 +88,7 @@ class Config:
             killProgram()
 
         
-        cprint("Loaded config", fore=Fore.CYAN)
+        cprint("Loaded config\n", fore=Fore.CYAN)
 
 
     
