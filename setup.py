@@ -3,7 +3,7 @@ import json
 
 from colorama import Fore, Style
 
-from logger import cprint, setPrintColors
+from logger import cprint, setPrintColors, killProgram
 
 
 setPrintColors(True)
@@ -137,8 +137,7 @@ else:
             
             cprint("Updated config", fore=Fore.GREEN)
 
-        cprint("\nPress enter to exit...", style=Style.DIM)
-        input()
+        killProgram()
 
 
 
@@ -167,5 +166,4 @@ with open("config.json", "w") as file:
     cprint("Successfully updated config", fore=Fore.GREEN)
 
 
-cprint("\nPress enter to exit", style=Style.DIM)
-input()
+killProgram()

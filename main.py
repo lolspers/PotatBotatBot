@@ -9,7 +9,7 @@ from time import time, sleep, strftime
 
 import api
 from config import config
-from logger import logger, cprint, clprint
+from logger import logger, cprint, clprint, killProgram
 from utils import rankPrice, relative
 
 
@@ -311,8 +311,7 @@ while True:
         logger.critical(f"Stopped bot: {e}")
         clprint("Stopped bot:", e, style=[Style.BRIGHT, None], globalFore=Fore.MAGENTA)
 
-        cprint("Press enter to exit.", style=Style.DIM)
-        input()
+        killProgram()
 
 
     except Exception as e:

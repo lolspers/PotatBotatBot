@@ -1,9 +1,8 @@
 import json
 
 from colorama import Fore, Style, Back
-from os import _exit
 
-from logger import logger, cprint, clprint, setPrintColors
+from logger import logger, cprint, clprint, setPrintColors, killProgram
 
 
 filePath = "config.json"
@@ -24,16 +23,17 @@ class Config:
 
             clprint("Please set up", "config.json", "or run", "setup.py", "before starting the bot", 
                     style=[None, Style.BRIGHT, None, Style.BRIGHT], globalFore=Fore.MAGENTA)
-            input()
-            _exit(1)
+            
+            killProgram()
+
 
         except Exception as e:
             logger.error("Failed to get config", exc_info=e)
 
             clprint("Failed to read config file, check", "logs.log", "for detailed error data.", "Please make an issue on github or contact lolspers on twitch if this issue persists.", 
                     style=[None, Style.BRIGHT, None, Style.BRIGHT], globalFore=Fore.MAGENTA)
-            input()
-            _exit(1)
+            
+            killProgram()
 
 
         try:
@@ -72,19 +72,20 @@ class Config:
             clprint(f"Missing value in config.json:", str(e), "- please make sure", "'config.json'", "matches with", "'example-config.json'. " \
                     "If you used 'setup.py' or believe this is an error, please make an issue on github or contact lolspers on twitch.", 
                     style=[None, Style.BRIGHT, None, Style.BRIGHT, None, Style.BRIGHT], globalFore=Fore.MAGENTA)
-            input()
-            _exit(1)
+            
+            killProgram()
 
 
         if self.usePotat and not self.potatToken:
             cprint("Using potat api, but no potat api token is set.", fore=Fore.MAGENTA)
-            input()
-            _exit(1)
+            
+            killProgram()
+
 
         elif not self.usePotat and not self.twitchCredentialsSet():
             cprint("Using twitch api, but at least one of the twitch credentials is not set.", fore=Fore.MAGENTA)
-            input()
-            _exit(1)
+            
+            killProgram()
 
         
         cprint("Loaded config", fore=Fore.CYAN)

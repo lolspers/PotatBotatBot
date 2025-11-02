@@ -1,3 +1,4 @@
+import os
 import logging
 import colorama
 
@@ -71,3 +72,12 @@ def clprint(*values, fore: list[str | None] | None = None, style: list[str | Non
         values = [globalAnsi + value for value in values]
 
     print(*values)
+
+
+
+def killProgram() -> None:
+    cprint("\nPress enter to exit...", style=colorama.Style.DIM)
+
+    input()
+
+    os._exit(1)

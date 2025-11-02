@@ -1,7 +1,3 @@
-
-from datetime import datetime
-
-
 unitToSeconds = {
     "hours": 3600,
     "minutes": 60,
