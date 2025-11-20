@@ -232,6 +232,8 @@ while True:
                     else:
                         clprint("Successfully prestiged:", response, style=[Style.BRIGHT], globalFore=Fore.YELLOW)
 
+                        sleep(1)
+
                         result = updatePrestigeStats()
 
                         if result.get("error"):
