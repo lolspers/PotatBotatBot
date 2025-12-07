@@ -5,9 +5,8 @@ from colorama import Fore, Style, Back
 
 from exceptions import StopBot
 from logger import logger, cprint, clprint, setPrintColors, setPrintTime, killProgram
-from .twitch import generateToken, validateToken
 from api.potat import setAuth as setPotatAuth, getSelf
-from api.twitch import setAuth as setTwitchAuth, refreshToken
+from api.twitch import setAuth as setTwitchAuth, generateToken, validateToken, refreshToken
 
 
 filePath = "config.json"
