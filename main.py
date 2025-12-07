@@ -7,7 +7,11 @@ from datetime import datetime
 from colorama import Fore, Style, Back
 from time import time, sleep, strftime
 
-import api
+import exceptions
+import api.exceptions
+import api.cooldowns
+import api.execute
+import api.potat
 from config import config
 from logger import logger, cprint, clprint, tprint, killProgram
 from utils import rankPrice, relative
@@ -183,7 +187,7 @@ while True:
 
         if boughtShopItem:
             executions += 2
-            shopCooldowns = api.getShopCooldowns()
+            shopCooldowns = api.cooldowns.shopCooldowns()
             boughtShopItem = False
 
             print()
@@ -199,7 +203,7 @@ while True:
 
         if executedCommand:
             executions += 1
-            potatoData = api.getPotatoData()
+            potatoData = api.cooldowns.normalCooldowns()
 
             potatoes: int = potatoData["potatoes"]
             rank: int = potatoData["rank"]
@@ -224,7 +228,7 @@ while True:
 
             if potatoes >= rankCost:
                 if rank == 6:
-                    ok, response = api.send("prestige")
+                    ok, response = api.execute.send("prestige")
 
                     if not ok:
                         clprint("Failed to prestige", response, style=[Style.BRIGHT], globalFore=Fore.RED)
@@ -244,7 +248,7 @@ while True:
                         
 
                 else:
-                    ok, response = api.send("rankup")
+                    ok, response = api.execute.send("rankup")
 
                     if not ok:
                         clprint("Failed to rank up:", response, style=[Style.BRIGHT], globalFore=Fore.RED)
@@ -266,16 +270,16 @@ while True:
             if cooldown != "quiz":
                 if cooldown == "potato":
                     if shopCooldowns.get("shop-fertilizer", time()+10) < time():
-                        boughtShopItem = api.buyItem(item="fertilizer", rank=rank, potatoes=potatoes) if not boughtShopItem else boughtShopItem
+                        boughtShopItem = api.execute.buyItem(item="fertilizer", rank=rank, potatoes=potatoes) if not boughtShopItem else boughtShopItem
                     
                     if shopCooldowns.get("shop-guard", time()+10) < time():
                         if boughtShopItem:
                             sleep(5) 
                         
-                        boughtShopItem = api.buyItem(item="guard", rank=rank, potatoes=potatoes) if not boughtShopItem else boughtShopItem
+                        boughtShopItem = api.execute.buyItem(item="guard", rank=rank, potatoes=potatoes) if not boughtShopItem else boughtShopItem
 
 
-                ok, response = api.send(cooldown)
+                ok, response = api.execute.send(cooldown)
 
                 if not ok:
                     clprint("Failed to execute command:", response, style=[Style.BRIGHT], globalFore=Fore.RED)
@@ -289,7 +293,7 @@ while True:
                         if boughtShopItem:
                             sleep(5) 
                         
-                        boughtShopItem = api.buyItem(item="cdr", rank=rank, potatoes=potatoes) if not boughtShopItem else boughtShopItem
+                        boughtShopItem = api.execute.buyItem(item="cdr", rank=rank, potatoes=potatoes) if not boughtShopItem else boughtShopItem
 
                 sleep(1)
                 continue
@@ -297,11 +301,13 @@ while True:
 
             # first execute the quiz in the targetted twitch chat
             # to not send "🥳 Thats right! Congratulations on getting the right answer, heres # potatoes!" in your own chat
-            ok, response = api.twitchSend("quiz")
-            cprint(response, fore=None if ok else Fore.RED)
-            sleep(5)
+            if not config.usePotat:
+                ok, response = api.execute.send("quiz")
+                cprint(response, fore=None if ok else Fore.RED)
+                sleep(5)
 
-            ok, quiz = api.potatSend("quiz", cdRetries=3)
+
+            ok, quiz = api.potat.potatSend(config.userPrefix + "quiz", cdRetries=3)
 
             if not ok:
                 logger.warning(f"Failed to get quiz: {quiz}")
@@ -321,8 +327,8 @@ while True:
 
             clprint("Found quiz answer:", answer, style=[Style.BRIGHT])
 
-            sleep(5) # small cooldown to be safe
-            ok, response = api.twitchSend(f"{answer}", prefix=False)
+            sleep(7) # small cooldown to be safe
+            ok, response = api.execute.send(f"a {answer}")
 
             if not ok:
                 clprint("Failed to answer quiz:", response, style=[None, Style.DIM])
@@ -335,7 +341,7 @@ while True:
                 if boughtShopItem:
                     sleep(5)
                 
-                boughtShopItem = api.buyItem(item="quiz", rank=rank, potatoes=potatoes) if not boughtShopItem else boughtShopItem
+                boughtShopItem = api.execute.buyItem(item="quiz", rank=rank, potatoes=potatoes) if not boughtShopItem else boughtShopItem
 
             executions += 2
             continue
@@ -347,12 +353,19 @@ while True:
 
 
 
-    except api.stopBot as e:
+    except exceptions.StopBot as e:
         logger.critical(f"Stopped bot: {e}")
         print("\n")
         clprint("Stopped bot:", str(e), style=[Style.BRIGHT, None], globalFore=Fore.MAGENTA)
 
         killProgram()
+
+
+    except api.exceptions.PotatNoResult:
+        cprint("Failed to execute command: Command invocation didn't return any result.", fore=Fore.RED)
+        cprint("Checking user prefix...", style=Style.DIM)
+        
+        api.execute.checkUserPrefix()
 
 
     except Exception as e:

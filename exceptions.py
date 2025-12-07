@@ -1,0 +1,2 @@
+class StopBot(Exception):
+    pass

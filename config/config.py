@@ -3,6 +3,8 @@ import json
 from colorama import Fore, Style, Back
 
 from logger import logger, cprint, clprint, setPrintColors, setPrintTime, killProgram
+from api.potat import setAuth as setPotatAuth
+from api.twitch import setAuth as setTwitchAuth
 
 
 filePath = "config.json"
@@ -50,12 +52,12 @@ class Config:
 
             self.userPrefix: str = data.get("userPrefix", "")
             self.channelPrefix: str = data.get("channelPrefix", "")
-            self.potatToken: str | None = data.get("potatToken")
+            self.potatToken: str = data.get("potatToken", "")
 
-            self.twitchToken: str | None = data.get("twitchToken")
-            self.clientId: str | None = data.get("clientId")
-            self.refreshToken: str | None = data.get("refreshToken")
-            self.clientSecret: str | None = data.get("clientSecret")
+            self.twitchToken: str = data.get("twitchToken", "")
+            self.clientId: str = data.get("clientId", "")
+            self.refreshToken: str = data.get("refreshToken", "")
+            self.clientSecret: str = data.get("clientSecret", "")
 
             self.usePotat: bool = data["usePotatApi"]
 
@@ -68,6 +70,10 @@ class Config:
 
             if isinstance(self.channelId, int):
                 self.channelId = str(self.channelId)
+
+            
+            setPotatAuth(token=self.potatToken)
+            setTwitchAuth(token=self.twitchToken, clientId=self.clientId)
 
 
         except KeyError as e:
@@ -164,7 +170,7 @@ class Config:
 
 
     def enablePotat(self) -> bool:
-        if self.potatToken is None:
+        if not self.potatToken:
             logger.warning("Tried to enable potat api but potatToken is not set")
             return False
         
@@ -226,6 +232,8 @@ class Config:
         self.refreshToken = refreshToken
 
         self.updateConfig()
+        
+        setTwitchAuth(token=self.twitchToken, clientId=self.clientId)
 
         logger.info("Refreshed twitch token")
 
