@@ -6,7 +6,7 @@ from colorama import Fore, Style, Back
 from exceptions import StopBot
 from logger import logger, cprint, clprint, setPrintColors, setPrintTime, killProgram
 from .twitch import generateToken, validateToken
-from api.potat import setAuth as setPotatAuth
+from api.potat import setAuth as setPotatAuth, getSelf
 from api.twitch import setAuth as setTwitchAuth, refreshToken
 
 
@@ -48,10 +48,9 @@ class Config:
             setPrintColors(self.color)
             setPrintTime(self.time)
 
-
-            self.username: str = data["username"]
+            self.username: str
+            self.userId: str
             self.channelId: str = data.get("channelId", "")
-            self.userId: str = ""
 
             self.userPrefix: str = data.get("userPrefix", "")
             self.channelPrefix: str = data.get("channelPrefix", "")
@@ -70,10 +69,6 @@ class Config:
 
             self.loggingLevel: int = data.get("loggingLevel", 30)
 
-            
-            setPotatAuth(token=self.potatToken)
-            setTwitchAuth(token=self.twitchToken, clientId=self.clientId)
-
 
         except KeyError as e:
             clprint(f"Missing value in config.json:", str(e), "- please make sure", "'config.json'", "matches with", "'example-config.json'. " \
@@ -85,6 +80,8 @@ class Config:
 
         logger.setLevel(self.loggingLevel)
 
+
+        self.setupPotat()
 
         if not self.usePotat:
             successful = self.setupTwitch()
@@ -102,6 +99,18 @@ class Config:
 
 
     
+    def setupPotat(self) -> bool:
+        setPotatAuth(token=self.potatToken)
+
+        userdata = getSelf()
+
+        self.username = userdata["login"]
+        self.userId = userdata["uid"]
+
+        return True
+
+
+
     def setupTwitch(self) -> bool:
         if self.authCode and not (self.twitchToken and self.refreshToken):
             logger.info("Code set while access/refresh tokens are not, generating new tokens")
@@ -266,6 +275,8 @@ class Config:
             logger.warning("Tried to enable potat api but potatToken is not set")
             return False
         
+        self.setupPotat()
+
         self.usePotat = True
 
         self.updateConfig()

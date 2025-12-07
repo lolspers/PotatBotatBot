@@ -25,8 +25,6 @@ pip install -r requirements.txt
 ### Configuration
 Copy `example-config.json`, rename it to `config.json` and open it in any text editor.
 
-Set `username` to your twitch username.
-
 #### PotatBotat
 
 Sign in on [potat.app](https://potat.app). Press `Ctrl + Shift + I` and to go the console. Copy `localStorage.getItem("authorization")` and paste it in the console. Copy the text that it returns. In `config.json` set `potatToken` to the text you just copied. 
@@ -66,5 +64,5 @@ Copy the code from the link and in `config.json` set `authCode` to the code you 
 
 ## Usage
 
-To start the bot simply open `main.py`.
+To start the bot simply run `main.py`.
 Any errors will be logged in `logs.log`.

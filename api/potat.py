@@ -26,6 +26,26 @@ def setAuth(token: str) -> None:
 
 
 
+def getSelf() -> dict[str, str]:
+    ok, message = potatSend("@potatbotat u")
+    
+    if not ok:
+        logger.critical(f"Failed to get self: {message}")
+        raise StopBot(f"Failed to get self: {message}")
+    
+
+    parts = message.split(" - ", 1)[1].split(" ● ", 2)
+
+    username = parts[0].removeprefix("@").lower()
+    uid = parts[1].split("ID: ", 1)[1]
+    
+    return {
+        "login": username,
+        "uid": uid
+    }
+
+
+
 def getPotatUser(username: str) -> dict:
     response = requests.get(url + f"users/{username}")
 
