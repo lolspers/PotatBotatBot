@@ -22,8 +22,8 @@ class Config:
         except FileNotFoundError:
             logger.warning("config.json file was not found")
 
-            clprint("Please set up", "config.json", "or run", "setup.py", "before starting the bot", 
-                    style=[None, Style.BRIGHT, None, Style.BRIGHT], globalFore=Fore.MAGENTA)
+            clprint("Please set up", "config.json", "before starting the bot", 
+                    style=[None, Style.BRIGHT], globalFore=Fore.MAGENTA)
             
             killProgram()
 
@@ -70,7 +70,7 @@ class Config:
 
         except KeyError as e:
             clprint(f"Missing value in config.json:", str(e), "- please make sure", "'config.json'", "matches with", "'example-config.json'. " \
-                    "If you used 'setup.py' or believe this is an error, please make an issue on github or contact lolspers on twitch.", 
+                    "If you believe this is an error, please make an issue on github or contact lolspers on twitch.", 
                     style=[None, Style.BRIGHT, None, Style.BRIGHT, None, Style.BRIGHT], globalFore=Fore.MAGENTA)
             
             killProgram()
