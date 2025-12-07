@@ -3,10 +3,11 @@ import re
 
 from colorama import Fore, Style, Back
 
+from exceptions import StopBot
 from logger import logger, cprint, clprint, setPrintColors, setPrintTime, killProgram
 from .twitch import generateToken, validateToken
 from api.potat import setAuth as setPotatAuth
-from api.twitch import setAuth as setTwitchAuth
+from api.twitch import setAuth as setTwitchAuth, refreshToken
 
 
 filePath = "config.json"
@@ -163,13 +164,19 @@ class Config:
 
         if tokenData.get("error"):
             if tokenData.get("status") == 401:
-                logger.warning("Found token is invalid")
-                cprint("Invalid access token found, please generate a new code.", fore=Fore.MAGENTA)
+                try:
+                    refreshData = refreshToken(clientSecret=self.clientSecret, clientId=self.clientId, refreshToken=self.refreshToken)
+                    self.updateTwitchTokens(accessToken=refreshData["accessToken"], refreshToken=refreshData["refreshToken"])
+
+                except StopBot:
+                    logger.warning("Found token is invalid")
+                    cprint("Invalid access token found, please generate a new code.", fore=Fore.MAGENTA)
+                    return False
+
             else:
                 logger.warning(f"Failed to validate token: {tokenData}")
                 clprint(f"Failed to validate token:", tokenData["error"], style=[Style.BRIGHT], globalFore=Fore.MAGENTA)
-
-            return False
+                return False
         
 
         self.username = tokenData["login"]
