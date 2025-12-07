@@ -4,7 +4,7 @@ import json
 from datetime import datetime
 from time import time
 
-from api import getPotatUser
+from api.potat import getPotatUser
 from config import config
 from logger import logger
 
