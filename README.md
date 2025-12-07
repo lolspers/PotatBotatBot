@@ -25,7 +25,7 @@ pip install -r requirements.txt
 ### Configuration
 Copy `example-config.json`, rename it to `config.json` and open it in any text editor.
 
-Set `username` to your twitch username and `channel` to the channel you want to farm in (when farming through twitch).
+Set `username` to your twitch username.
 
 #### PotatBotat
 
@@ -41,6 +41,8 @@ Sign in on [potat.app](https://potat.app). Press `Ctrl + Shift + I` and to go th
 
 > [!TIP]
 > If you're only going to farm through potatbotat api, none of the following twitch configuration is required.
+
+In `config.json` set `channelId` to the user id of the channel you want to send the messages to. One way to get a user id, is by using the [user command](https://potat.app/help/user).
 
 Register an application [here](https://dev.twitch.tv/console/apps) and give it any name. Set `OAuth Redirect URLs` to `http://localhost`, `Category` to `Other`, and `Client Type` to `Confidential`.
 

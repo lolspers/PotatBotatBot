@@ -61,7 +61,7 @@ def inputs():
             enabled = config.enableTwitch()
 
             if not enabled:
-                cprint("Cannot enable twitch api: A required twitch credential in is not set in the config!", fore=Fore.MAGENTA)
+                cprint("Failed to switch to twitch api", fore=Fore.RED)
 
             else:
                 cprint("Switched to twitch messages", fore=Fore.CYAN)

@@ -1,9 +1,10 @@
 import json
+import re
 
 from colorama import Fore, Style, Back
 
 from logger import logger, cprint, clprint, setPrintColors, setPrintTime, killProgram
-from .twitch import generateToken, validateToken, getUserId
+from .twitch import generateToken, validateToken
 
 
 filePath = "config.json"
@@ -46,9 +47,8 @@ class Config:
 
 
             self.username: str = data["username"]
-            self.channel: str = data.get("channel", "")
+            self.channelId: str = data.get("channelId", "")
             self.userId: str = ""
-            self.channelId: str = ""
 
             self.userPrefix: str = data.get("userPrefix", "")
             self.channelPrefix: str = data.get("channelPrefix", "")
@@ -80,7 +80,10 @@ class Config:
 
 
         if not self.usePotat:
-            self.setupTwitch()
+            successful = self.setupTwitch()
+
+            if not successful:
+                killProgram()
         
 
         if self.usePotat and not self.potatToken:
@@ -92,7 +95,7 @@ class Config:
 
 
     
-    def setupTwitch(self):
+    def setupTwitch(self) -> bool:
         if self.authCode and not (self.twitchToken and self.refreshToken):
             logger.info("Code set while access/refresh tokens are not, generating new tokens")
             cprint("Code found and twitch tokens are not set, generating twitch tokens...", style=Style.DIM)
@@ -100,13 +103,13 @@ class Config:
             if not self.clientSecret:
                 logger.warning("Tried to generate twitch tokens, but client secret is missing")
                 cprint("Tried to generate twitch tokens, but client secret is missing", fore=Fore.MAGENTA)
-                return killProgram()
+                return False
 
 
             if not self.clientId:
                 logger.warning("Tried to generate twitch tokens, but client id is missing")
                 cprint("Tried to generate twitch tokens, but client id is missing", fore=Fore.MAGENTA)
-                return killProgram()
+                return False
             
             authData: dict = generateToken(clientSecret=self.clientSecret, clientId=self.clientId, code=self.authCode)
 
@@ -118,7 +121,7 @@ class Config:
 
                 logger.warning(f"Failed to generate twitch tokens: {error}")
                 clprint(f"Failed to generate twitch tokens ({status}):", message, style=[Style.BRIGHT], globalFore=Fore.MAGENTA)
-                return killProgram()
+                return False
             
 
             self.authCode = ""
@@ -134,7 +137,18 @@ class Config:
         elif not self.twitchCredentialsSet():
             logger.warning("Not all twitch credentials are set")
             cprint("Using twitch api, but at least one of the twitch credentials is not set.", fore=Fore.MAGENTA)
-            return killProgram()
+            return False
+        
+
+        if not self.channelId:
+            logger.warning("Tried to setup twitch, but no channel id is set")
+            cprint("Tried to use twitch api, but no channel id is set.", fore=Fore.MAGENTA)
+            return False
+        
+        if not re.match(r"^\d+$", self.channelId):
+            logger.warning("Tried to setup twitch, but channel id is not a number")
+            cprint("Tried to use twitch api, but channel id is not a number.", fore=Fore.MAGENTA)
+            return False
 
 
         logger.info("Validating token...")
@@ -149,7 +163,7 @@ class Config:
                 logger.warning(f"Failed to validate token: {tokenData}")
                 clprint(f"Failed to validate token:", tokenData["error"], style=[Style.BRIGHT], globalFore=Fore.MAGENTA)
 
-            return killProgram()
+            return False
         
 
         self.username = tokenData["login"]
@@ -159,26 +173,15 @@ class Config:
         cprint("Validated twitch token", style=Style.DIM)
 
         self.updateConfig()
-        
 
-        channelData = getUserId(clientId=self.clientId, token=self.twitchToken, username=self.channel)
-
-        error: dict | None = channelData.get("error")
-
-        if error:
-            clprint(f"Failed to get channel id ({error.get("status")}):", error.get("message", error), style=[Style.BRIGHT], globalFore=Fore.MAGENTA)
-            return killProgram()
-        
-        self.channelId = channelData["id"]
-
-        logger.info(f"Fetched channnel id ({self.channelId})")
+        return True
 
 
 
     def updateConfig(self) -> None:
         data = {
             "username": self.username,
-            "channel": self.channel,
+            "channelId": self.channelId,
             "userPrefix": self.userPrefix,
             "channelPrefix": self.channelPrefix,
             "twitchToken": self.twitchToken,
@@ -263,9 +266,14 @@ class Config:
     def enableTwitch(self) -> bool:
         if not self.twitchCredentialsSet():
             logger.warning("Tried to enable twitch api but a credential is not set")
+            cprint("Cannot enable twitch api: A required twitch credential in is not set in the config!", fore=Fore.MAGENTA)
             return False
         
-        
+        setUp = self.setupTwitch()
+
+        if not setUp:
+            return False
+
         self.usePotat = False
 
         self.updateConfig()

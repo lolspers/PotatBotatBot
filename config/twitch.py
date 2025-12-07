@@ -44,31 +44,3 @@ def validateToken(token: str) -> dict:
         return {"status": 200, "error": "Token is missing the `user:write:chat` scope"}
     
     return data
-
-
-
-def getUserId(clientId: str, token: str, username: str) -> dict:
-    headers = {
-        "Client-Id": clientId,
-        "Authorization": f"Bearer {token}"
-    }
-
-    params = {
-        "login": username
-    }
-
-    response = requests.get("https://api.twitch.tv/helix/users", headers=headers, params=params)
-
-    data: dict = response.json()
-
-    if response.status_code != 200:
-        return {"error": data}
-
-    userData: list[dict] = data["data"]
-
-    if not userData:
-        return {"error": {"status": 200, "message": "User not found"}}
-
-    userId = userData[0]["id"]
-
-    return {"id": userId}
