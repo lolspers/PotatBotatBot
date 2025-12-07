@@ -1,8 +1,10 @@
 import json
+import re
 
 from colorama import Fore, Style, Back
 
 from logger import logger, cprint, clprint, setPrintColors, setPrintTime, killProgram
+from .twitch import generateToken, validateToken
 from api.potat import setAuth as setPotatAuth
 from api.twitch import setAuth as setTwitchAuth
 
@@ -23,8 +25,8 @@ class Config:
         except FileNotFoundError:
             logger.warning("config.json file was not found")
 
-            clprint("Please set up", "config.json", "or run", "setup.py", "before starting the bot", 
-                    style=[None, Style.BRIGHT, None, Style.BRIGHT], globalFore=Fore.MAGENTA)
+            clprint("Please set up", "config.json", "before starting the bot", 
+                    style=[None, Style.BRIGHT], globalFore=Fore.MAGENTA)
             
             killProgram()
 
@@ -47,8 +49,8 @@ class Config:
 
 
             self.username: str = data["username"]
-            self.userId: str = data["userId"]
-            self.channelId: str = data["channelId"]
+            self.channelId: str = data.get("channelId", "")
+            self.userId: str = ""
 
             self.userPrefix: str = data.get("userPrefix", "")
             self.channelPrefix: str = data.get("channelPrefix", "")
@@ -58,18 +60,14 @@ class Config:
             self.clientId: str = data.get("clientId", "")
             self.refreshToken: str = data.get("refreshToken", "")
             self.clientSecret: str = data.get("clientSecret", "")
+            self.authCode: str | None = data.get("authCode")
 
             self.usePotat: bool = data["usePotatApi"]
 
             self.enabledCommands: dict[str, bool] = data["farmingCommands"]
             self.enabledShopItems: dict[str, bool] = data["shopItems"]
 
-
-            if isinstance(self.userId, int):
-                self.userId = str(self.userId)
-
-            if isinstance(self.channelId, int):
-                self.channelId = str(self.channelId)
+            self.loggingLevel: int = data.get("loggingLevel", 30)
 
             
             setPotatAuth(token=self.potatToken)
@@ -78,44 +76,131 @@ class Config:
 
         except KeyError as e:
             clprint(f"Missing value in config.json:", str(e), "- please make sure", "'config.json'", "matches with", "'example-config.json'. " \
-                    "If you used 'setup.py' or believe this is an error, please make an issue on github or contact lolspers on twitch.", 
+                    "If you believe this is an error, please make an issue on github or contact lolspers on twitch.", 
                     style=[None, Style.BRIGHT, None, Style.BRIGHT, None, Style.BRIGHT], globalFore=Fore.MAGENTA)
             
             killProgram()
 
 
+        logger.setLevel(self.loggingLevel)
+
+
+        if not self.usePotat:
+            successful = self.setupTwitch()
+
+            if not successful:
+                killProgram()
+        
+
         if self.usePotat and not self.potatToken:
             cprint("Using potat api, but no potat api token is set.", fore=Fore.MAGENTA)
             
             killProgram()
-
-
-        elif not self.usePotat and not self.twitchCredentialsSet():
-            cprint("Using twitch api, but at least one of the twitch credentials is not set.", fore=Fore.MAGENTA)
-            
-            killProgram()
-
         
         cprint("Loaded config\n", fore=Fore.CYAN)
 
 
     
+    def setupTwitch(self) -> bool:
+        if self.authCode and not (self.twitchToken and self.refreshToken):
+            logger.info("Code set while access/refresh tokens are not, generating new tokens")
+            cprint("Code found and twitch tokens are not set, generating twitch tokens...", style=Style.DIM)
+
+            if not self.clientSecret:
+                logger.warning("Tried to generate twitch tokens, but client secret is missing")
+                cprint("Tried to generate twitch tokens, but client secret is missing", fore=Fore.MAGENTA)
+                return False
+
+
+            if not self.clientId:
+                logger.warning("Tried to generate twitch tokens, but client id is missing")
+                cprint("Tried to generate twitch tokens, but client id is missing", fore=Fore.MAGENTA)
+                return False
+            
+            authData: dict = generateToken(clientSecret=self.clientSecret, clientId=self.clientId, code=self.authCode)
+
+            error: dict | None = authData.get("error")
+
+            if error:
+                message: str = error.get("message", "No error message provided")
+                status: int = error.get("status")
+
+                logger.warning(f"Failed to generate twitch tokens: {error}")
+                clprint(f"Failed to generate twitch tokens ({status}):", message, style=[Style.BRIGHT], globalFore=Fore.MAGENTA)
+                return False
+            
+
+            self.authCode = ""
+            self.twitchToken = authData["access_token"]
+            self.refreshToken = authData["refresh_token"]
+
+            logger.info("Generated twitch tokens")
+            cprint("Generated twitch tokens", fore=Fore.BLUE)
+
+            self.updateConfig()
+
+
+        elif not self.twitchCredentialsSet():
+            logger.warning("Not all twitch credentials are set")
+            cprint("Using twitch api, but at least one of the twitch credentials is not set.", fore=Fore.MAGENTA)
+            return False
+        
+
+        if not self.channelId:
+            logger.warning("Tried to setup twitch, but no channel id is set")
+            cprint("Tried to use twitch api, but no channel id is set.", fore=Fore.MAGENTA)
+            return False
+        
+        if not re.match(r"^\d+$", self.channelId):
+            logger.warning("Tried to setup twitch, but channel id is not a number")
+            cprint("Tried to use twitch api, but channel id is not a number.", fore=Fore.MAGENTA)
+            return False
+
+
+        logger.info("Validating token...")
+
+        tokenData: dict = validateToken(self.twitchToken)
+
+        if tokenData.get("error"):
+            if tokenData.get("status") == 401:
+                logger.warning("Found token is invalid")
+                cprint("Invalid access token found, please generate a new code.", fore=Fore.MAGENTA)
+            else:
+                logger.warning(f"Failed to validate token: {tokenData}")
+                clprint(f"Failed to validate token:", tokenData["error"], style=[Style.BRIGHT], globalFore=Fore.MAGENTA)
+
+            return False
+        
+
+        self.username = tokenData["login"]
+        self.userId = tokenData["user_id"]
+
+        logger.info("Validated twitch token")
+        cprint("Validated twitch token", style=Style.DIM)
+
+        self.updateConfig()
+
+        return True
+
+
+
     def updateConfig(self) -> None:
         data = {
             "username": self.username,
-            "userId": self.userId,
             "channelId": self.channelId,
             "userPrefix": self.userPrefix,
             "channelPrefix": self.channelPrefix,
             "twitchToken": self.twitchToken,
-            "clientId": self.clientId,
             "refreshToken": self.refreshToken,
+            "clientId": self.clientId,
             "clientSecret": self.clientSecret,
+            "authCode": self.authCode,
             "potatToken": self.potatToken,
             "usePotatApi": self.usePotat,
             "printInColor": self.color,
             "farmingCommands": self.enabledCommands,
-            "shopItems": self.enabledShopItems
+            "shopItems": self.enabledShopItems,
+            "loggingLevel": self.loggingLevel
         }
 
 
@@ -187,9 +272,14 @@ class Config:
     def enableTwitch(self) -> bool:
         if not self.twitchCredentialsSet():
             logger.warning("Tried to enable twitch api but a credential is not set")
+            cprint("Cannot enable twitch api: A required twitch credential in is not set in the config!", fore=Fore.MAGENTA)
             return False
         
-        
+        setUp = self.setupTwitch()
+
+        if not setUp:
+            return False
+
         self.usePotat = False
 
         self.updateConfig()
