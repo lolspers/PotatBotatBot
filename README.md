@@ -61,6 +61,17 @@ Copy the code from the link and in `config.json` set `authCode` to the code you 
 > [!IMPORTANT]
 > Any changes made to `config.py` while the bot is running will most likely be overwritten, as the file is only read on start.
 
+#### Optional settings
+
+| Setting | Data type | Description | Default |
+| ------- | --------- | ----------- | ------- |
+| `printInColor` | bool | If true, prints text in the console in a cetrain color, based on the type of message. | `true` |
+| `printTime` | bool | If true, prepends the time to text printed in the console. (`[HH:MM:SS]`) | `true` |
+| `usePotatApi` | bool | If true, executes commands through [PotatBotat api](https://potat.app/api/docs) instead of executing it through twitch chat. | `false` |
+| `farmingCommands` | dict[str, bool] | Determines which commands will be automated. |  |
+| `shopItems` | dict[str, bool] | Determines which shop items will be automated. These will only be bought right after or before the command they effect has been executed. |  |
+| `loggingLevel` | int | The level threshold of the logger. Allowed values are: 0 (NOTSET), 10 (DEBUG), 20 (INFO), 30 (WARNING), 40 (ERROR), 50 (CRITICAL). | `30` |
+
 
 ## Usage
 

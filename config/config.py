@@ -211,8 +211,9 @@ class Config:
             "clientSecret": self.clientSecret,
             "authCode": self.authCode,
             "potatToken": self.potatToken,
-            "usePotatApi": self.usePotat,
             "printInColor": self.color,
+            "printTime": self.time,
+            "usePotatApi": self.usePotat,
             "farmingCommands": self.enabledCommands,
             "shopItems": self.enabledShopItems,
             "loggingLevel": self.loggingLevel
