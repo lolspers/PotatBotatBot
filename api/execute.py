@@ -7,7 +7,7 @@ from logger import logger
 from utils import shopItemPrice
 from exceptions import StopBot
 from .exceptions import Unauthorized
-from .potat import potatSend, getChannelPrefix, getUserPrefix, lastChannelPrefixCheck
+from .potat import potatSend, getChannelPrefix, lastChannelPrefixCheck
 from .twitch import twitchSend, getTwitchUser, refreshToken as refreshTwitchToken
 
 
@@ -28,17 +28,6 @@ def buyItem(item: str, rank: int, potatoes: int) -> bool:
         print(Fore.RED + f"Failed to buy shop item: {data}")
 
     return True
-
-
-
-def checkUserPrefix() -> None:
-    prefix = getUserPrefix(config.username)
-
-    if prefix != config.userPrefix:
-        config.updateUserPrefix(prefix)
-
-        logger.info(f"Updated user prefix: {prefix=}")
-        print(Style.DIM + Fore.CYAN + f"Updated user prefix to '{prefix}'")
 
 
 
@@ -63,9 +52,6 @@ def checkChannelPrefix() -> None:
 
 def send(message: str, forcePotat: bool = False, forceTwitch: bool = False, prefix: bool = True) -> tuple[bool, str]:
     if (config.usePotat and not forceTwitch) or forcePotat:
-        if prefix:
-            message = config.userPrefix + message
-
         return potatSend(message)
 
 
@@ -98,8 +84,3 @@ def send(message: str, forcePotat: bool = False, forceTwitch: bool = False, pref
             config.updateTwitchTokens(accessToken=data["accessToken"], refreshToken=data["refreshToken"])
 
             return twitchSend(channelId=config.channelId, userId=config.userId, message=message)
-
-
-
-if not config.userPrefix:
-    checkUserPrefix()

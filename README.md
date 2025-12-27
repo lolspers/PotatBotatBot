@@ -69,7 +69,7 @@ Copy the code from the link and in `config.json` set `authCode` to the code you 
 
 | Setting | Data type | Description | Default |
 | ------- | --------- | ----------- | ------- |
-|  | bool | If true, prints text in the console in a certain color, based on the type of message. | `true` |
+| `printInColor` | bool | If true, prints text in the console in a certain color, based on the type of message. | `true` |
 | `printTime` | bool | If true, prepends the time to text printed in the console. (`[HH:MM:SS]`) | `true` |
 | `usePotatApi` | bool | If true, executes commands through [PotatBotat api](https://potat.app/api/docs) instead of executing it through twitch chat. | `false` |
 | `farmingCommands` | dict[str, bool] | Commands set to `true` will be automated. | <details> `{ "potato": true, "steal": true, "trample": false, "cdr": true, "quiz": false }` </details> |

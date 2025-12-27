@@ -51,7 +51,6 @@ class Config:
             self.userId: str
             self.channelId: str = data.get("channelId", "")
 
-            self.userPrefix: str = data.get("userPrefix", "")
             self.channelPrefix: str = data.get("channelPrefix", "")
             self.potatToken: str = data.get("potatToken", "")
 
@@ -203,7 +202,6 @@ class Config:
         data = {
             "username": self.username,
             "channelId": self.channelId,
-            "userPrefix": self.userPrefix,
             "channelPrefix": self.channelPrefix,
             "twitchToken": self.twitchToken,
             "refreshToken": self.refreshToken,
@@ -344,15 +342,6 @@ class Config:
         setTwitchAuth(token=self.twitchToken, clientId=self.clientId)
 
         logger.info("Refreshed twitch token")
-
-
-
-    def updateUserPrefix(self, prefix: str) -> None:
-        self.userPrefix = prefix
-        
-        self.updateConfig()
-
-        logger.debug(f"Updated user prefix, set to '{prefix}'")
 
 
 

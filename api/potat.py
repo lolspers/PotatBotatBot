@@ -27,7 +27,7 @@ def setAuth(token: str) -> None:
 
 
 def getSelf() -> dict[str, str]:
-    ok, message = potatSend("@potatbotat u")
+    ok, message = potatSend("u")
     
     if not ok:
         logger.critical(f"Failed to get self: {message}")
@@ -74,18 +74,6 @@ def getPrefix(username: str) -> str | None:
 
 
 
-def getUserPrefix(username: str) -> str:
-    logger.debug("Checking user prefix")
-
-    prefix = getPrefix(username)
-
-    if not prefix:
-        raise StopBot("Failed to get prefix: PotatBotat is not joined in your channel")
-
-    return prefix
-
-
-
 def getChannelPrefix(channel: str) -> str:
     logger.debug("Checking channel prefix")
 
@@ -99,6 +87,9 @@ def getChannelPrefix(channel: str) -> str:
 
 
 def potatSend(message: str, cdRetries: int = 0) -> tuple[bool, str]:
+    if not message.lower().startswith("@potatbotat"):
+        message = f"@potatbotat {message}"
+    
     logger.debug(f"Sending message through potat api: {message}")
     response = requests.post(url+"execute", headers=headers, json={"text": message})
 

@@ -8,7 +8,6 @@ from colorama import Fore, Style, Back
 from time import time, sleep, strftime
 
 import exceptions
-import api.exceptions
 import api.cooldowns
 import api.execute
 import api.potat
@@ -307,7 +306,7 @@ while True:
                 sleep(5)
 
 
-            ok, quiz = api.potat.potatSend(config.userPrefix + "quiz", cdRetries=3)
+            ok, quiz = api.potat.potatSend("quiz", cdRetries=3)
 
             if not ok:
                 logger.warning(f"Failed to get quiz: {quiz}")
@@ -359,13 +358,6 @@ while True:
         clprint("Stopped bot:", str(e), style=[Style.BRIGHT, None], globalFore=Fore.MAGENTA)
 
         killProgram()
-
-
-    except api.exceptions.PotatNoResult:
-        cprint("Failed to execute command: Command invocation didn't return any result.", fore=Fore.RED)
-        cprint("Checking user prefix...", style=Style.DIM)
-        
-        api.execute.checkUserPrefix()
 
 
     except Exception as e:

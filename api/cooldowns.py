@@ -50,7 +50,7 @@ def normalCooldowns() -> dict:
 
 
 def shopCooldowns() -> dict[str, float]:
-    ok, result = potatSend(config.userPrefix + "status")
+    ok, result = potatSend("status")
 
     if not ok:
         raise Exception(f"Failed to get shop cooldowns: {result}")
