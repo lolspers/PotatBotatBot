@@ -1,4 +1,3 @@
-import json
 import os
 
 from datetime import datetime
@@ -8,16 +7,10 @@ from time import time, sleep, strftime
 import exceptions
 import api.cooldowns
 import api.execute
-import api.potat
-from config import config
 from logger import logger, cprint, clprint, tprint, killProgram
 from utils import rankPrice, relative, farmingCommands, shopItems
 from inputs import Inputs
 from prestige import updatePrestigeStats
-
-
-with open("quizes.json", "r") as file:
-    quizes = json.loads(file.read())
 
 
 
@@ -175,53 +168,18 @@ while True:
                 sleep(1)
                 continue
 
-
-            # first execute the quiz in the targetted twitch chat
-            # to not send "🥳 Thats right! Congratulations on getting the right answer, heres # potatoes!" in your own chat
-            if not config.usePotat:
-                ok, response = api.execute.send("quiz")
-                cprint(response, fore=None if ok else Fore.RED)
-                sleep(5)
-
-
-            ok, quiz = api.potat.potatSend("quiz", cdRetries=3)
-
-            if not ok:
-                logger.warning(f"Failed to get quiz: {quiz}")
-                clprint("Failed to get quiz:", quiz, style=[Style.BRIGHT], globalFore=Fore.RED)
-                continue
-
-
-            # Example response:󠀀 ⚠️ You already have an existing quiz in progress! Here is the question in case you forgot: <quiz>
-            clprint("Received quiz:", quiz, style=[None, Style.DIM])
-            answer = quizes.get(quiz, None)
-
-            if answer is None:
-                logger.warning(f"No quiz anser found for quiz: {quiz}")
-                clprint("No quiz answer found for quiz:", quiz, style=[Style.BRIGHT], globalFore=Fore.RED)
-                continue
-            
-
-            clprint("Found quiz answer:", answer, style=[Style.BRIGHT])
-
-            sleep(7) # small cooldown to be safe
-            ok, response = api.execute.send(f"a {answer}")
-
-            if not ok:
-                clprint("Failed to answer quiz:", response, style=[None, Style.DIM])
             
             else:
-                clprint("Answered quiz:", response, style=[None, Style.DIM], globalFore=Fore.GREEN)
+                api.execute.executeQuiz()
 
+                if shopCooldowns.get("shop-quiz", time()+10) < time():
+                    if boughtShopItem:
+                        sleep(5)
+                    
+                    boughtShopItem = api.execute.buyItem(item="quiz", rank=rank, potatoes=potatoes) if not boughtShopItem else boughtShopItem
 
-            if shopCooldowns.get("shop-quiz", time()+10) < time():
-                if boughtShopItem:
-                    sleep(5)
-                
-                boughtShopItem = api.execute.buyItem(item="quiz", rank=rank, potatoes=potatoes) if not boughtShopItem else boughtShopItem
-
-            executions += 2
-            continue
+                executions += 2
+                continue
 
 
         executions -= loopDelay/10 if loopDelay < 90 else 0.9

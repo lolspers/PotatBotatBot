@@ -1,3 +1,10 @@
+import json
+
+
+with open("quizes.json", "r") as file:
+    quizes: dict[str, str] = json.loads(file.read())
+
+
 unitToSeconds = {
     "hours": 3600,
     "minutes": 60,
