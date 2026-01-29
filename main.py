@@ -1,4 +1,5 @@
 import json
+import os
 
 from datetime import datetime
 from colorama import Fore, Style, Back
@@ -235,6 +236,10 @@ while True:
         clprint("Stopped bot:", str(e), style=[Style.BRIGHT, None], globalFore=Fore.MAGENTA)
 
         killProgram()
+
+    
+    except KeyboardInterrupt as e:
+        os._exit(1)
 
 
     except Exception as e:
