@@ -1,7 +1,4 @@
-
 import json
-import threading
-import queue
 
 from datetime import datetime
 from colorama import Fore, Style, Back
@@ -13,7 +10,8 @@ import api.execute
 import api.potat
 from config import config
 from logger import logger, cprint, clprint, tprint, killProgram
-from utils import rankPrice, relative
+from utils import rankPrice, relative, farmingCommands, shopItems
+from inputs import Inputs
 from prestige import updatePrestigeStats
 
 
@@ -25,132 +23,11 @@ with open("quizes.json", "r") as file:
 loopDelay: int = 1
 executions: float = 0
 
-allFarmingCommands: list[str] = ["potato", "steal", "trample", "cdr", "quiz"]
-allShopItems: list[str] = ["shop-fertilizer", "shop-guard", "shop-cdr", "shop-quiz"]
-
 executedCommand: bool = True
 boughtShopItem: bool = True
 
 
-uInputs = queue.Queue()
-
-
-def inputs():
-    logger.debug("Started input loop")
-
-    while True:
-        uInput = input().lower()
-        uInputs.put(uInput)
-
-        if uInput == "s":
-            logger.info("Stopped by users request")
-            
-            break
-
-
-        elif uInput in allFarmingCommands:
-            enabled = config.toggleCommand(uInput)
-            
-            cprint(f"{"Enabled" if enabled else "Disabled"} command '{uInput}'", fore=Fore.CYAN)
-
-
-        elif uInput in allShopItems:
-            enabled = config.toggleCommand(uInput)
-
-            cprint(f"{"Enabled" if enabled else "Disabled"} auto buying for '{uInput}'", fore=Fore.CYAN)
-
-
-        elif "twitch" in uInput:
-            enabled = config.enableTwitch()
-
-            if not enabled:
-                cprint("Failed to switch to twitch api", fore=Fore.RED)
-
-            else:
-                cprint("Switched to twitch messages", fore=Fore.CYAN)
-
-
-        elif uInput == "potat" or uInput == "potatbotat":
-            enabled = config.enablePotat()
-
-            if not enabled:
-                cprint("Cannot enable potat api: potatToken is not set in the config!", fore=Fore.MAGENTA)
-
-            else:
-                cprint("Switched to potat api", fore=Fore.CYAN)
-
-
-        elif uInput == "refresh":
-            logger.info("User requested a cooldown refresh")
-
-            cprint("Refreshing cooldowns...", fore=Fore.CYAN)
-
-
-        elif uInput == "stats":
-            result = updatePrestigeStats()
-
-            if result.get("error"):
-                clprint("Failed to update prestige stats:", result["error"], style=[Style.BRIGHT], globalFore=Fore.RED)
-
-            else:
-                cprint("Updated prestige stats", fore=Fore.GREEN, style=Style.DIM)
-
-
-        elif uInput == "color":
-            enabled = config.toggleColoredPrinting()
-
-            cprint(f"{"Enabled" if enabled else "Disabled"} printing in color", fore=Fore.CYAN)
-
-
-        elif uInput == "time":
-            enabled = config.toggleTimePrinting()
-
-            cprint(f"{"Enabled" if enabled else "Disabled"} printing time", fore=Fore.CYAN)
-
-
-        else:
-            logger.debug(f"Invalid user command: {uInput}")
-
-            cprint(f"Invalid command: '{uInput}'", fore=Fore.YELLOW)
-
-        print("\n")
-
-
-
-inputThread = threading.Thread(target=inputs, daemon=True)
-inputThread.start()
-
-
-
-cprint("\nType at any time to execute a command", time=False)
-cprint("Valid commands:", time=False)
-cprint("'s': Stop the bot and close the program\n"
-    "'potat': Change to potatbotat api\n"
-    "'twitch': Change to twitch api", style=Style.DIM, time=False)
-print()
-
-
-longestFarmingCommand = len(max(allShopItems, key=len))
-
-for command in allFarmingCommands:
-    cprint(f"{f"'{command}': Toggle auto farming for {command}": <{longestFarmingCommand*2+20}} (Currently set to {config.isEnabled(command)})", style=Style.DIM, time=False)
-
-print()
-
-longestShopItem = len(max(allShopItems, key=len))
-
-for item in allShopItems:
-    cprint(f"{f"'{item}': Toggle auto buying from the shop for {item.split("shop-", 1)[1]}": <{longestShopItem*2+40}} (Currently set to {config.isEnabled(item)})", style=Style.DIM, time=False)
-
-
-print()
-cprint("'refresh': Force refresh potatbotat cooldowns\n", style=Style.DIM, time=False)
-cprint("'stats': Manually update prestige stats for the current prestige (if they do not exist yet)", style=Style.DIM, time=False)
-cprint("'color': Toggle printing in color\n", style=Style.DIM, time=False)
-cprint("'time': Toggle printing time\n", style=Style.DIM, time=False)
-cprint("Manual changes to config requires a restart to update\n\n", style=Style.DIM, time=False)
-
-
+inputs = Inputs()
 
 logger.debug("Started bot")
 
@@ -167,16 +44,16 @@ while True:
             cprint("Resumed", fore=Fore.CYAN, style=Style.DIM)
 
 
-        if not uInputs.empty():
-            uInput = uInputs.get()
+        if not inputs.queue.empty():
+            uInput = inputs.queue.get()
             if uInput == "s":
                 logger.info("Stopped bot by users request")
                 break
 
-            elif uInput in allFarmingCommands:
+            elif uInput in farmingCommands:
                 executedCommand = True
 
-            elif uInput in allShopItems:
+            elif uInput in shopItems:
                 boughtShopItem = True
 
             elif "refresh" in uInput:

@@ -22,6 +22,10 @@ shopPrices: dict[str, int] = {
 }
 
 
+farmingCommands: list[str] = ["potato", "steal", "trample", "cdr", "quiz"]
+shopItems: list[str] = [f"shop-{i}" for i in shopPrices.keys()]
+
+
 
 def rankPrice(prestige: int, rank: int) -> int:
     if rank == 6:
