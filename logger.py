@@ -7,7 +7,7 @@ from datetime import datetime
 
 logger = logging.getLogger("logger")
 
-fileHandler = logging.FileHandler("logs.log")
+fileHandler = logging.FileHandler("logs.log", encoding="utf-8")
 formatter = logging.Formatter("%(asctime)s [%(levelname)s] %(message)s")
 fileHandler.setFormatter(formatter)
 
