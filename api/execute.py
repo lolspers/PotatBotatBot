@@ -6,9 +6,12 @@ from config import config
 from logger import logger, cprint, clprint
 from utils import shopItemPrice, quizes
 from exceptions import StopBot
+from . import potat
 from .exceptions import Unauthorized
-from .potat import potatSend, getChannelPrefix, lastChannelPrefixCheck
 from .twitch import twitchSend, getTwitchUser, refreshToken as refreshTwitchToken
+
+
+lastChannelPrefixCheck = 0
 
 
 
@@ -32,20 +35,34 @@ def buyItem(item: str, rank: int, potatoes: int) -> bool:
 
 
 def executeQuiz() -> None:
-    # first execute the quiz in the targetted twitch chat
-    # to not send the quiz completion message in your own chat
+    # first send the quiz in twitch chat,
+    # to make potat send the quiz completion message in the right chat
     if not config.usePotat:
         ok, response = send("quiz")
         cprint(response, fore=(None if ok else Fore.RED))
-        sleep(5) # quiz cooldown
+        sleep(5.5)
 
 
-    ok, quiz = potatSend("quiz", cdRetries=3)
+    for n in range(3):
+        ok, res = potat.execute("quiz")
+        quiz: str = res.get("text", "")
+
+        if ok:
+            break
+
+        if "forgot: " in quiz:
+            quiz = quiz.split("forgot: ", 1)[1]
+            break
+
+        sleep(5.5)
 
     if not ok:
         logger.warning(f"Failed to get quiz: {quiz}")
         clprint("Failed to get quiz:", quiz, style=[Style.BRIGHT], globalFore=Fore.RED)
         return
+    
+    quiz = quiz.removesuffix("(You have five minutes to answer correctly, time starts now!)").strip()
+
 
     clprint("Received quiz:", quiz, style=[None, Style.DIM])
     answer = quizes.get(quiz, None)
@@ -57,7 +74,7 @@ def executeQuiz() -> None:
 
     clprint("Found quiz answer:", answer, style=[Style.BRIGHT])
 
-    sleep(6) # small cooldown to be safe
+    sleep(5.5)
     ok, response = send(f"a {answer}")
 
     if not ok:
@@ -73,7 +90,13 @@ def checkChannelPrefix() -> None:
     if not channel:
         raise StopBot(f"Tried to check channel prefix, but the channel id is invalid ({config.channelId})")
 
-    prefix = getChannelPrefix(channel)
+    data: dict = potat.getUser(channel)
+    channelData: dict | None = data.get("channel")
+
+    if not channelData:
+        raise StopBot(f"Failed to get channel prefix: PotatBotat is not joined in #{channel}")
+    
+    prefix = channelData["settings"]["prefix"]
 
     if config.channelPrefix != prefix:
         config.updateChannelPrefix(prefix)
@@ -88,7 +111,9 @@ def checkChannelPrefix() -> None:
 
 def send(message: str, forcePotat: bool = False, forceTwitch: bool = False, prefix: bool = True) -> tuple[bool, str]:
     if (config.usePotat and not forceTwitch) or forcePotat:
-        return potatSend(message)
+        ok, res = potat.execute(message)
+
+        return ok, res.get("text", res.get("error", res))
 
 
     else:
@@ -100,7 +125,6 @@ def send(message: str, forcePotat: bool = False, forceTwitch: bool = False, pref
                 except Unauthorized:
                     data = refreshTwitchToken(clientSecret=config.clientSecret, clientId=config.clientId, refreshToken=config.refreshToken)
                     config.updateTwitchTokens(accessToken=data["accessToken"], refreshToken=data["refreshToken"])
-
 
                     channelData = getTwitchUser(config.channelId)
 

@@ -1,8 +1,8 @@
 from time import time
 
+from . import potat
 from config import config
 from logger import logger
-from .potat import getPotatUser, potatSend
 
 
 unitToSeconds = {
@@ -15,7 +15,7 @@ unitToSeconds = {
 
 
 def normalCooldowns() -> dict:
-    data = getPotatUser(config.username)
+    data = potat.getUser(config.username)
 
     potatoData = data["potatoes"]
 
@@ -50,13 +50,14 @@ def normalCooldowns() -> dict:
 
 
 def shopCooldowns() -> dict[str, float]:
-    ok, result = potatSend("status")
+    ok, res = potat.execute("status")
 
     if not ok:
-        raise Exception(f"Failed to get shop cooldowns: {result}")
+        logger.error(f"Failed to get shop cooldowns: {res=}")
+        raise Exception(f"Failed to get shop cooldowns: {res.get("text", res["error"])}")
     
 
-    rawCooldowns = result.split(": ", 2)[2].replace("\u2705", "0s").lower()
+    rawCooldowns: str = res["text"].split(": ", 2)[2].replace("\u2705", "0s").lower()
 
     potatCooldowns = {
         cooldown.split(": ", 1)[0]: cooldown.split(": ", 1)[1]

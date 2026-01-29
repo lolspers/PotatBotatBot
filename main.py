@@ -50,7 +50,7 @@ while True:
             elif uInput in shopItems:
                 boughtShopItem = True
 
-            elif "refresh" in uInput:
+            elif uInput in ["refetch", "refresh"]:
                 executedCommand = True
                 boughtShopItem = True
 

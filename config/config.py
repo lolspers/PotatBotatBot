@@ -5,7 +5,7 @@ from colorama import Fore, Style, Back
 
 from exceptions import StopBot
 from logger import logger, cprint, clprint, setPrintColors, setPrintTime, killProgram
-from api.potat import setAuth as setPotatAuth, getSelf
+from api import potat
 from api.twitch import setAuth as setTwitchAuth, generateToken, validateToken, refreshToken
 
 
@@ -98,12 +98,19 @@ class Config:
 
     
     def setupPotat(self) -> bool:
-        setPotatAuth(token=self.potatToken)
+        potat.setToken(self.potatToken)
 
-        userdata = getSelf()
+        ok, res = potat.execute("user")
 
-        self.username = userdata["login"]
-        self.userId = userdata["uid"]
+        if not ok:
+            logger.critical(f"Config: failed to get self: {res=}")
+            raise Exception(f"Failed to get self: {res.get("text", res)}")
+        
+            
+        parts: list[str] = res["text"].split("●", 2)
+
+        self.username = parts[0].strip().removeprefix("@").lower()
+        self.userId = parts[1].split("ID: ", 1)[1].strip()
 
         return True
 

@@ -4,7 +4,7 @@ import json
 from datetime import datetime
 from time import time
 
-from api.potat import getPotatUser
+from api import potat
 from config import config
 from logger import logger
 
@@ -52,7 +52,7 @@ def getPrestigeStats() -> dict[str, dict[str, dict[str, int]]]:
 
 
 def updatePrestigeStats() -> dict:
-    userdata = getPotatUser(config.username)
+    userdata = potat.getUser(config.username)
 
     potatdata = userdata.get("potatoes")
 
