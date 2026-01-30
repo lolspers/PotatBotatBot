@@ -1,44 +1,15 @@
-import requests
-
-from .exceptions import Unauthorized
+from .apiClient import ApiClient
 from logger import logger
 
 
 
-class PotatApi:
+class PotatApi(ApiClient):
     def __init__(self) -> None:
+        self.name: str = "PotatApi"
         self.url: str = "https://api.potat.app"
         self.headers: dict[str, str] = {
             "Content-Type": "application/json"
         }
-
-    
-    def _request(self, method: str, endpoint: str, params: dict | None = None, json: dict | None = None) -> tuple[bool, dict]:
-        url = self.url + endpoint
-        logger.debug(f"PotatApi: sending {method} request to {url}, {params=}, {json=}")
-
-        response = requests.request(method, url, headers=self.headers, params=params, json=json)
-
-        try:
-            data: dict = response.json()
-            logger.debug(f"PotatApi: response data: {data}")
-        except requests.exceptions.JSONDecodeError:
-            logger.warning(f"PotatApi: response does not contain valid JSON: {response.text}")
-            return False, {"error": "Response does not contain valid JSON"}
-        
-        if not response.ok:
-            logger.error(f"PotatApi: response was not OK ({response.status_code}) for {url}: {data}")
-
-            if response.status_code == 418:
-                raise Unauthorized("Invalid PotatBotat token")
-            
-            data["status"] = response.status_code
-            if not data.get("error"):
-                data["error"] = "Response was not OK"
-            
-            return False, data
-        
-        return True, data
     
 
     def getUser(self, username: str) -> dict:

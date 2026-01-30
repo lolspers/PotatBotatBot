@@ -6,9 +6,8 @@ from config import config
 from logger import logger, cprint, clprint
 from utils import shopItemPrice, quizes
 from exceptions import StopBot
-from . import potat
+from . import potat, twitch
 from .exceptions import Unauthorized
-from .twitch import twitchSend, getTwitchUser, refreshToken as refreshTwitchToken
 
 
 lastChannelPrefixCheck = 0
@@ -85,7 +84,7 @@ def executeQuiz() -> None:
 
 
 def checkChannelPrefix() -> None:
-    channel = getTwitchUser(config.channelId).get("login")
+    channel = twitch.getUser(config.channelId).get("login")
 
     if not channel:
         raise StopBot(f"Tried to check channel prefix, but the channel id is invalid ({config.channelId})")
@@ -120,13 +119,12 @@ def send(message: str, forcePotat: bool = False, forceTwitch: bool = False, pref
         if prefix:
             if time() > lastChannelPrefixCheck + 3600:
                 try:
-                    channelData = getTwitchUser(config.channelId)
+                    channelData = twitch.getUser(config.channelId)
 
                 except Unauthorized:
-                    data = refreshTwitchToken(clientSecret=config.clientSecret, clientId=config.clientId, refreshToken=config.refreshToken)
-                    config.updateTwitchTokens(accessToken=data["accessToken"], refreshToken=data["refreshToken"])
+                    twitch.refreshAccessToken()
 
-                    channelData = getTwitchUser(config.channelId)
+                    channelData = twitch.getUser(config.channelId)
 
                 if not channelData:
                     raise StopBot("The provided channel id was not found!")
@@ -137,10 +135,11 @@ def send(message: str, forcePotat: bool = False, forceTwitch: bool = False, pref
 
         
         try:
-            return twitchSend(channelId=config.channelId, userId=config.userId, message=message)
+            ok, res = twitch.send(channelId=config.channelId, message=message)
+            return ok, message if ok else f"Failed to send twitch message: {res}"
         
         except Unauthorized:
-            refreshTwitchToken(clientSecret=config.clientSecret, clientId=config.clientId, refreshToken=config.refreshToken)
-            config.updateTwitchTokens(accessToken=data["accessToken"], refreshToken=data["refreshToken"])
+            twitch.refreshAccessToken()
 
-            return twitchSend(channelId=config.channelId, userId=config.userId, message=message)
+            ok, res = twitch.send(channelId=config.channelId, message=message)
+            return ok, message if ok else f"Failed to send twitch message: {res}"

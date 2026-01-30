@@ -3,10 +3,8 @@ import re
 
 from colorama import Fore, Style, Back
 
-from exceptions import StopBot
 from logger import logger, cprint, clprint, setPrintColors, setPrintTime, killProgram
-from api import potat
-from api.twitch import setAuth as setTwitchAuth, generateToken, validateToken, refreshToken
+from api import potat, twitch
 
 
 filePath = "config.json"
@@ -48,16 +46,15 @@ class Config:
             setPrintTime(self.time)
 
             self.username: str
-            self.userId: str
             self.channelId: str = data.get("channelId", "")
 
             self.channelPrefix: str = data.get("channelPrefix", "")
             self.potatToken: str = data.get("potatToken", "")
 
-            self.twitchToken: str = data.get("twitchToken", "")
-            self.clientId: str = data.get("clientId", "")
-            self.refreshToken: str = data.get("refreshToken", "")
-            self.clientSecret: str = data.get("clientSecret", "")
+            twitch.accessToken = data.get("twitchToken", "")
+            twitch.clientId = data.get("clientId", "")
+            twitch.refreshToken = data.get("refreshToken", "")
+            twitch.clientSecret = data.get("clientSecret", "")
             self.authCode: str | None = data.get("authCode")
 
             self.usePotat: bool = data["usePotatApi"]
@@ -110,44 +107,30 @@ class Config:
         parts: list[str] = res["text"].split("●", 2)
 
         self.username = parts[0].strip().removeprefix("@").lower()
-        self.userId = parts[1].split("ID: ", 1)[1].strip()
 
         return True
 
 
 
     def setupTwitch(self) -> bool:
-        if self.authCode and not (self.twitchToken and self.refreshToken):
+        if self.authCode and not (twitch.accessToken and twitch.refreshToken):
             logger.info("Code set while access/refresh tokens are not, generating new tokens")
             cprint("Code found and twitch tokens are not set, generating twitch tokens...", style=Style.DIM)
 
-            if not self.clientSecret:
+            if not twitch.clientSecret:
                 logger.warning("Tried to generate twitch tokens, but client secret is missing")
                 cprint("Tried to generate twitch tokens, but client secret is missing", fore=Fore.MAGENTA)
                 return False
 
-
-            if not self.clientId:
+            if not twitch.clientId:
                 logger.warning("Tried to generate twitch tokens, but client id is missing")
                 cprint("Tried to generate twitch tokens, but client id is missing", fore=Fore.MAGENTA)
                 return False
             
-            authData: dict = generateToken(clientSecret=self.clientSecret, clientId=self.clientId, code=self.authCode)
-
-            error: dict | None = authData.get("error")
-
-            if error:
-                message: str = error.get("message", "No error message provided")
-                status: int = error.get("status")
-
-                logger.warning(f"Failed to generate twitch tokens: {error}")
-                clprint(f"Failed to generate twitch tokens ({status}):", message, style=[Style.BRIGHT], globalFore=Fore.MAGENTA)
-                return False
-            
+            twitch.generateToken(code=self.authCode)
 
             self.authCode = ""
-            self.twitchToken = authData["access_token"]
-            self.refreshToken = authData["refresh_token"]
+            twitch.refreshToken = twitch.refreshToken
 
             logger.info("Generated twitch tokens")
             cprint("Generated twitch tokens", fore=Fore.BLUE)
@@ -172,31 +155,7 @@ class Config:
             return False
 
 
-        logger.info("Validating token...")
-
-        tokenData: dict = validateToken(self.twitchToken)
-
-        if tokenData.get("error"):
-            if tokenData.get("status") == 401:
-                try:
-                    refreshData = refreshToken(clientSecret=self.clientSecret, clientId=self.clientId, refreshToken=self.refreshToken)
-                    self.updateTwitchTokens(accessToken=refreshData["accessToken"], refreshToken=refreshData["refreshToken"])
-
-                except StopBot:
-                    logger.warning("Found token is invalid")
-                    cprint("Invalid access token found, please generate a new code.", fore=Fore.MAGENTA)
-                    return False
-
-            else:
-                logger.warning(f"Failed to validate token: {tokenData}")
-                clprint(f"Failed to validate token:", tokenData["error"], style=[Style.BRIGHT], globalFore=Fore.MAGENTA)
-                return False
-        
-
-        self.username = tokenData["login"]
-        self.userId = tokenData["user_id"]
-
-        logger.info("Validated twitch token")
+        twitch.setAuth()
         cprint("Validated twitch token", style=Style.DIM)
 
         self.updateConfig()
@@ -207,13 +166,12 @@ class Config:
 
     def updateConfig(self) -> None:
         data = {
-            "username": self.username,
             "channelId": self.channelId,
             "channelPrefix": self.channelPrefix,
-            "twitchToken": self.twitchToken,
-            "refreshToken": self.refreshToken,
-            "clientId": self.clientId,
-            "clientSecret": self.clientSecret,
+            "twitchToken": twitch.accessToken,
+            "refreshToken": twitch.refreshToken,
+            "clientId": twitch.clientId,
+            "clientSecret": twitch.clientSecret,
             "authCode": self.authCode,
             "potatToken": self.potatToken,
             "printInColor": self.color,
@@ -339,19 +297,6 @@ class Config:
 
 
 
-
-    def updateTwitchTokens(self, accessToken: str, refreshToken: str) -> None:
-        self.twitchToken = accessToken
-        self.refreshToken = refreshToken
-
-        self.updateConfig()
-        
-        setTwitchAuth(token=self.twitchToken, clientId=self.clientId)
-
-        logger.info("Refreshed twitch token")
-
-
-
     def updateChannelPrefix(self, prefix: str) -> None:
         self.channelPrefix = prefix
         
@@ -362,10 +307,10 @@ class Config:
 
 
     def twitchCredentialsSet(self) -> bool:
-        if None in [self.twitchToken, self.clientId, self.refreshToken, self.clientSecret]:
+        if None in [twitch.accessToken, twitch.clientId, twitch.refreshToken, twitch.clientSecret]:
             return False
         
-        if "" in [self.twitchToken, self.clientId, self.refreshToken, self.clientSecret]:
+        if "" in [twitch.accessToken, twitch.clientId, twitch.refreshToken, twitch.clientSecret]:
             return False
         
         return True
