@@ -1,18 +1,19 @@
-import json
-
-
-with open("quizes.json", "r") as file:
-    quizes: dict[str, str] = json.loads(file.read())
-
-
 unitToSeconds = {
+    "days": 86400,
     "hours": 3600,
     "minutes": 60,
     "seconds": 1
 }
+shortUnitToSeconds = {
+    "d": 86400,
+    "h": 3600,
+    "m": 60,
+    "s": 1
+}
 
 
 rankPrices: dict[int, int] = {
+    0: 1000,
     1: 1000,
     2: 5000,
     3: 10000,
@@ -27,29 +28,6 @@ shopPrices: dict[str, int] = {
     "guard": 100,
     "quiz": 125
 }
-
-
-farmingCommands: list[str] = ["potato", "steal", "trample", "cdr", "quiz"]
-shopItems: list[str] = [f"shop-{i}" for i in shopPrices.keys()]
-
-
-
-def rankPrice(prestige: int, rank: int) -> int:
-    if rank == 6:
-        return prestigePrice(prestige)
-    
-    return rankPrices[rank]
-
-
-
-def prestigePrice(prestige: int) -> int:
-    return 100_000 + (20_000 * prestige)
-
-
-
-def shopItemPrice(item: str, rank: int) -> int:
-    return shopPrices[item] * rank
-
 
 
 def formatSeconds(n: int | float) -> str:

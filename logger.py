@@ -1,9 +1,12 @@
 import os
 import logging
 import colorama
-
 from datetime import datetime
 
+from config import config
+
+
+killedProgram: bool = False
 
 logger = logging.getLogger("logger")
 
@@ -12,34 +15,18 @@ formatter = logging.Formatter("%(asctime)s [%(levelname)s] %(message)s")
 fileHandler.setFormatter(formatter)
 
 logger.addHandler(fileHandler)
-logger.setLevel(30)
+logger.setLevel(config.loggingLevel)
 
 
 colorama.init(autoreset=True)
 
-printColors: bool = True
-printTime: bool = True
-
-
-
-def setPrintColors(enable: bool) -> None:
-    global printColors
-
-    printColors = enable
-
-
-def setPrintTime(enable: bool) -> None:
-    global printTime
-
-    printTime = enable
-
 
 
 def tprint(*values, time: bool = True):
-    if printTime and time:
+    if config.printTime and time:
         dt = datetime.now().strftime("[%H:%M:%S]")
 
-        if printColors:
+        if config.printColor:
             dt = colorama.Style.DIM + dt
 
         values = (dt,) + values
@@ -49,7 +36,7 @@ def tprint(*values, time: bool = True):
 
 
 def cprint(text, fore: str | None = None, style: str | None = None, back: str | None = None, time: bool = True):
-    if printColors:
+    if config.printColor:
         ansi = ""
 
         if fore:
@@ -69,7 +56,7 @@ def cprint(text, fore: str | None = None, style: str | None = None, back: str | 
 
 
 def clprint(*values, fore: list[str | None] | None = None, style: list[str | None] | None = None, back: list[str | None] | None = None, globalFore: str = "", globalStyle: str = "", globalBack: str = "", time: bool = True):
-    if printColors:
+    if config.printColor:
         values = list(values)
 
         for type in [fore, style, back]:
@@ -94,8 +81,11 @@ def clprint(*values, fore: list[str | None] | None = None, style: list[str | Non
 
 
 def killProgram() -> None:
+    global killedProgram
+    killedProgram = True
+    
     cprint("\nPress enter to exit...", style=colorama.Style.DIM, time=False)
 
     input()
 
-    os._exit(1)
+    os._exit(0)
