@@ -1,4 +1,5 @@
 from .apiClient import ApiClient
+from config import config
 from logger import logger
 
 
@@ -8,14 +9,16 @@ class PotatApi(ApiClient):
         self.name: str = "PotatApi"
         self.url: str = "https://api.potat.app"
         self.headers: dict[str, str] = {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            "User-Agent": "PotatBotatBot",
+            "Authorization": f"Bearer {config.potatToken}"
         }
     
 
-    def getUser(self, username: str) -> dict:
+    def getUser(self, username: str) -> tuple[bool, dict]:
         ok, res = self._request("GET", f"/users/{username}")
 
-        return res["data"][0] if ok else {}
+        return ok, (res["data"][0] if ok else res)
 
 
     def execute(self, message: str, cooldownRetries: int = 3) -> tuple[bool, dict]:
@@ -32,17 +35,22 @@ class PotatApi(ApiClient):
         result: dict = {}
 
         error: str = data.get("error", "")
-        if error and (message.endswith("steal") and ("\u274c" not in error or "[-" in error)): # a failed steal returns an error, which contains the X emoji
-            logger.warning(f"PotatApi: execute error: {data=}")
+        if error: 
+            # a failed steal returns an error, which contains the X emoji
+            if message.endswith("steal") and ("\u274c" in error or "[-" in error):
+                data["text"] = error
+            
+            else:
+                logger.warning(f"PotatApi: execute error: {data=}")
 
-            if not result.get("text"):
-                result["text"] = error
-            
-            if error.endswith("on cooldown.") and cooldownRetries > 0:
-                cooldownRetries -= 1
-                return self.execute(message, cooldownRetries=cooldownRetries)
-            
-            return False, result
+                if not result.get("text"):
+                    result["text"] = error
+                
+                if error.endswith("on cooldown.") and cooldownRetries > 0:
+                    cooldownRetries -= 1
+                    return self.execute(message, cooldownRetries=cooldownRetries)
+                
+                return False, result
         
         data["text"] = data["text"].strip("\u034f").strip("¾").strip()
 
@@ -51,7 +59,18 @@ class PotatApi(ApiClient):
             return False, data
         
         return True, data
+
+
+    def getSelf(self) -> tuple[str, str]:
+        ok, res = self.execute("user")
+
+        if not ok:
+            logger.critical(f"PotatApi: failed to get self: {res=}")
+            raise Exception(f"Failed to get self: {res.get("text", res)}")
         
-        
-    def setToken(self, token: str) -> None:
-        self.headers["Authorization"] = f"Bearer {token}"
+        parts: list[str] = res["text"].split("●", 2)
+
+        username = parts[0].strip().removeprefix("@").lower()
+        userId = parts[1].split("ID: ", 1)[1]
+
+        return username, userId
