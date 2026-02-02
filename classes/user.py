@@ -7,12 +7,12 @@ from api import potat, twitch
 from config import config
 from config.inputs import canEnableTwitch
 from classes.channel import PotatChannel
-from classes.commands import Commands, Quiz, Prestige
+from classes.commands import Commands, Quiz, Rankup, Prestige
 from classes.userdata import UserData
 from prestige import updatePrestigeStats
 from exceptions import StopBot
 from logger import logger, cprint, clprint
-from utils import shortUnitToSeconds
+from utils import shortUnitToSeconds, relative
 
 
 with open("quizes.json", "r") as file:
@@ -132,6 +132,21 @@ class User(UserData):
 
 
 
+    def setCooldowns(self, shop: bool = True) -> None:
+        print()
+        self.setData()
+        if shop:
+            self.setShopCooldowns()
+
+        for command in self.commands.executable:
+            if type(command) in [Rankup, Prestige]:
+                continue
+            if command.enabled:
+                cprint(f"{command.trigger.replace(" ", "-")} ready {relative(command.readyAt - time())}", style=Style.DIM)
+        print()
+                
+
+
     def executeCommands(self) -> None:
         executedCommand: bool = False
 
@@ -180,8 +195,8 @@ class User(UserData):
                 clprint(f"Error while executing \"{command.trigger}\":", f"{type(e).__name__}: {str(e)}", style=[Style.DIM], globalFore=Fore.RED)
 
         if executedCommand:
-            self.setData()
-            self.setShopCooldowns()
+            sleep(5)
+            self.setCooldowns()
 
 
 

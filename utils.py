@@ -1,9 +1,3 @@
-unitToSeconds = {
-    "days": 86400,
-    "hours": 3600,
-    "minutes": 60,
-    "seconds": 1
-}
 shortUnitToSeconds = {
     "d": 86400,
     "h": 3600,
@@ -34,7 +28,7 @@ def formatSeconds(n: int | float) -> str:
     n = int(n)
     parts = []
     
-    for timeUnit, s in unitToSeconds.items():
+    for timeUnit, s in shortUnitToSeconds.items():
         if n < 0:
             s = -s
         
@@ -42,7 +36,7 @@ def formatSeconds(n: int | float) -> str:
         n %= s
         
         if value != 0:
-            parts.append(f"{value} {timeUnit if value != 1 else timeUnit[:-1]}")
+            parts.append(f"{value}{timeUnit if value != 1 else timeUnit[:-1]}")
 
 
     return " and ".join(", ".join(parts).rsplit(", ", 1)) if parts else "0 seconds"

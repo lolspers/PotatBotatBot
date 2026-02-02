@@ -107,14 +107,14 @@ class Inputs:
                     enable = not config.farmingCommands[uInput]
                     config.farmingCommands[uInput] = enable
                     cprint(f"{"Enabled" if enable else "Disabled"} command '{uInput}'", fore=Fore.CYAN)
-                    self.user.setData()
+                    self.user.setCooldowns(shop=False)
 
 
                 elif uInput in defaultShopItems:
                     enable = not config.shopItems[uInput]
                     config.shopItems[uInput] = enable
                     cprint(f"{"Enabled" if enable else "Disabled"} auto buying for '{uInput}'", fore=Fore.CYAN)
-                    self.user.setShopCooldowns()
+                    self.user.setCooldowns()
 
 
                 elif uInput in ["twitch", "twitchapi"]:
@@ -133,8 +133,7 @@ class Inputs:
 
                 elif uInput in ["refresh", "refetch"]:
                     cprint("Refreshing cooldowns...", fore=Fore.CYAN)
-                    self.user.setData()
-                    self.user.setShopCooldowns()
+                    self.user.setCooldowns()
 
 
                 elif uInput == "stats":

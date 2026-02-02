@@ -22,8 +22,7 @@ def main() -> None:
         user = User()
         inputs = Inputs(user)
 
-        user.setData()
-        user.setShopCooldowns()
+        user.setCooldowns()
 
     except Exception as e:
         logger.critical("Error while initializing User/Inputs", exc_info=e)
@@ -55,7 +54,7 @@ def main() -> None:
                 user.executions -= 0.1
 
 
-            sleep(1)
+            sleep(5)
 
         
         except StopBot as e:
