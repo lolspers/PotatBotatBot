@@ -201,7 +201,7 @@ class User(UserData):
             clprint("Failed to get quiz:", error, style=[Style.DIM], globalFore=Fore.RED)
             return
         
-        quiz: str = res["text"]
+        
         quiz = quiz.removesuffix("(You have five minutes to answer correctly, time starts now!)")
         quiz = quiz.strip()
 
