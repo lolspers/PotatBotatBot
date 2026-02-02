@@ -64,24 +64,24 @@ class User(UserData):
         UserData.taxMultiplier = d["taxMultiplier"]
         self.verbose: bool = d["verbose"]
 
-        self.commands.potato.readyAt = d["potato"]["readyAt"]
+        self.commands.potato.readyAt = d["potato"]["readyAt"] // 1000
         self.commands.potato.ready = d["potato"]["ready"]
         self.commands.potato.usage = d["potato"]["usage"]
 
         self.commands.cdr.readyAt = int(d["cdr"]["readyAt"]) if d["cdr"]["readyAt"] else 0
         self.commands.cdr.ready = d["cdr"]["ready"]
 
-        self.commands.trample.readyAt = d["trample"]["readyAt"]
+        self.commands.trample.readyAt = d["trample"]["readyAt"] // 1000
         self.commands.trample.ready = d["trample"]["ready"]
         self.commands.trample.usage = d["trample"]["trampleCount"]
         self.commands.trample.trampledCount = d["trample"]["trampledCount"]
         
-        self.commands.steal.readyAt = d["steal"]["readyAt"]
+        self.commands.steal.readyAt = d["steal"]["readyAt"] // 1000
         self.commands.steal.ready = d["steal"]["ready"]
         self.commands.steal.usage = d["steal"]["theftCount"]
         self.commands.steal.stolenCount = d["steal"]["stolenCount"]
         
-        self.commands.quiz.readyAt = d["quiz"]["readyAt"]
+        self.commands.quiz.readyAt = d["quiz"]["readyAt"] // 1000
         self.commands.quiz.ready = d["quiz"]["ready"]
         self.commands.quiz.attempted = d["quiz"]["attempted"]
         self.commands.quiz.completed = d["quiz"]["completed"]
