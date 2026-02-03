@@ -57,6 +57,8 @@ class User(UserData):
             logger.critical(f"No potato data found for user '{self.username}'")
             raise StopBot(f"No potato data found for user '{self.username}'")
         
+        getCmdCd = lambda data: data["readyAt"] // 1000 if data["readyAt"] else 0 
+        
         self.joinedAt: str = d["joinedAt"]
         UserData.prestige = d["prestige"]
         UserData.rank = d["rank"]
@@ -64,24 +66,24 @@ class User(UserData):
         UserData.taxMultiplier = d["taxMultiplier"]
         self.verbose: bool = d["verbose"]
 
-        self.commands.potato.readyAt = d["potato"]["readyAt"] // 1000
+        self.commands.potato.readyAt = getCmdCd(d["potato"])
         self.commands.potato.ready = d["potato"]["ready"]
         self.commands.potato.usage = d["potato"]["usage"]
 
-        self.commands.cdr.readyAt = int(d["cdr"]["readyAt"]) // 1000 if d["cdr"]["readyAt"] else 0
+        self.commands.cdr.readyAt = getCmdCd(d["cdr"])
         self.commands.cdr.ready = d["cdr"]["ready"]
 
-        self.commands.trample.readyAt = d["trample"]["readyAt"] // 1000
+        self.commands.trample.readyAt = getCmdCd(d["trample"])
         self.commands.trample.ready = d["trample"]["ready"]
         self.commands.trample.usage = d["trample"]["trampleCount"]
         self.commands.trample.trampledCount = d["trample"]["trampledCount"]
         
-        self.commands.steal.readyAt = d["steal"]["readyAt"] // 1000
+        self.commands.steal.readyAt = getCmdCd(d["steal"])
         self.commands.steal.ready = d["steal"]["ready"]
         self.commands.steal.usage = d["steal"]["theftCount"]
         self.commands.steal.stolenCount = d["steal"]["stolenCount"]
         
-        self.commands.quiz.readyAt = d["quiz"]["readyAt"] // 1000 if d["quiz"]["readyAt"] else 0
+        self.commands.quiz.readyAt = getCmdCd(d["quiz"])
         self.commands.quiz.ready = d["quiz"]["ready"]
         self.commands.quiz.attempted = d["quiz"]["attempted"]
         self.commands.quiz.completed = d["quiz"]["completed"]
