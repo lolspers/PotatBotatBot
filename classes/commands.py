@@ -8,6 +8,20 @@ class Potato(Command):
         self.trigger: str = "potato"
         self.usage: int = 0
 
+    def execute(
+            self,
+            commands # type: Commands
+    ) -> tuple[bool, dict]:
+        if commands.shopGuard.canExecute:
+            ok, res = commands.shopGuard._execute()
+            self.handleResult(ok, res)
+
+        if commands.shopFertilizer.canExecute:
+            ok, res = commands.shopQuiz._execute()
+            self.handleResult(ok, res)
+
+        return self._execute()
+
 
 class Steal(Command):
     def __init__(self) -> None:
@@ -27,6 +41,18 @@ class Cdr(Command):
     def __init__(self) -> None:
         self.trigger: str = "cdr"
         self.baseCost: int = 15
+
+    def execute(
+            self,
+            commands # type: Commands
+    ) -> tuple[bool, dict]:
+        ok, res = self._execute()
+
+        if ok and commands.shopCdr.canExecute:
+            shopok, shopres = commands.shopCdr._execute()
+            self.handleResult(shopok, shopres)
+
+        return ok, res
     
     @property
     def cost(self) -> int:
@@ -38,6 +64,18 @@ class Quiz(Command):
         self.trigger: str = "quiz"
         self.attempted: int = 0
         self.completed: int = 0
+
+    def execute(
+            self,
+            commands # type: Commands
+    ) -> tuple[bool, dict]:
+        ok, res = self._execute()
+
+        if ok and commands.shopQuiz.canExecute:
+            shopok, shopres = commands.shopQuiz._execute()
+            self.handleResult(shopok, shopres)
+
+        return ok, res
 
 
 
@@ -139,7 +177,10 @@ class Commands:
             self.cdr,
             self.quiz,
             self.rankup,
-            self.prestige,
+            self.prestige
+        ]
+
+        self.shopItems: list[ShopItem] = [
             self.shopCdr,
             self.shopFertilizer,
             self.shopGuard,

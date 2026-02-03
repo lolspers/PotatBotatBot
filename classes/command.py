@@ -1,10 +1,11 @@
-from time import time
+from colorama import Fore, Style, Back
+from time import time, sleep
 
 from api import potat, twitch
 from api.exceptions import Unauthorized
 from classes.userdata import UserData
 from config import config
-from logger import logger
+from logger import logger, clprint
 
 
 class Command(UserData):
@@ -39,7 +40,7 @@ class Command(UserData):
 
 
 
-    def execute(self) -> tuple[bool, dict]:
+    def _execute(self) -> tuple[bool, dict]:
         logger.debug(f"Executing command: {self.trigger}")
 
         if not config.usePotat:
@@ -55,6 +56,33 @@ class Command(UserData):
             ok, res = potat.execute(message)
 
         return ok, res
+    
+    
+    def execute(self, commands) -> tuple[bool, dict]:
+        return self._execute()
+    
+
+    def handleResult(self, ok: bool, res: dict) -> bool:                    
+        if not ok:
+            logger.error(f"Failed to execute command \"{self.trigger}\": {res=}")
+
+            message: str | dict = res.get("text", res.get("error", res.get("message", res)))
+            clprint(f"Failed to execute command \"{self.trigger}\":", ascii(str(message)), style=[Style.DIM], globalFore=Fore.RED)
+            return False
+
+        else:
+            logger.debug(f"Executed command: {self.trigger}")
+
+            messages = [f"Executed command \"{self.trigger}\""]
+            if res.get("text"):
+                messages.append(ascii(res["text"]))
+
+            clprint(*messages, style=[Style.DIM])
+
+            if self.trigger.startswith("shop"):
+                sleep(6)
+            
+            return True
 
 
 

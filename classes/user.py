@@ -68,7 +68,7 @@ class User(UserData):
         self.commands.potato.ready = d["potato"]["ready"]
         self.commands.potato.usage = d["potato"]["usage"]
 
-        self.commands.cdr.readyAt = int(d["cdr"]["readyAt"]) if d["cdr"]["readyAt"] else 0
+        self.commands.cdr.readyAt = int(d["cdr"]["readyAt"]) // 1000 if d["cdr"]["readyAt"] else 0
         self.commands.cdr.ready = d["cdr"]["ready"]
 
         self.commands.trample.readyAt = d["trample"]["readyAt"] // 1000
@@ -81,7 +81,7 @@ class User(UserData):
         self.commands.steal.usage = d["steal"]["theftCount"]
         self.commands.steal.stolenCount = d["steal"]["stolenCount"]
         
-        self.commands.quiz.readyAt = d["quiz"]["readyAt"] // 1000
+        self.commands.quiz.readyAt = d["quiz"]["readyAt"] // 1000 if d["quiz"]["readyAt"] else 0
         self.commands.quiz.ready = d["quiz"]["ready"]
         self.commands.quiz.attempted = d["quiz"]["attempted"]
         self.commands.quiz.completed = d["quiz"]["completed"]
@@ -138,7 +138,7 @@ class User(UserData):
         if shop:
             self.setShopCooldowns()
 
-        for command in self.commands.executable:
+        for command in self.commands.executable + self.commands.shopItems:
             if type(command) in [Rankup, Prestige]:
                 continue
             if command.enabled:
@@ -156,26 +156,8 @@ class User(UserData):
                     executedCommand = True
                     self.executions += 1
                     logger.debug(f"{self.executions=}")
-                    ok, res = command.execute()
-
-
-                    if not ok:
-                        logger.error(f"Failed to execute command \"{command.trigger}\": {res=}")
-
-                        message: str | dict = res.get("text", res.get("error", res.get("message", res)))
-                        clprint(f"Failed to execute command \"{command.trigger}\":", ascii(str(message)), style=[Style.DIM], globalFore=Fore.RED)
-
-                    else:
-                        logger.debug(f"Executed command: {command.trigger}")
-
-                        messages = [f"Executed command \"{command.trigger}\""]
-                        if res.get("text"):
-                            messages.append(ascii(res["text"]))
-
-                        clprint(*messages, style=[Style.DIM])
-
-                        if command.trigger.startswith("shop"):
-                            sleep(6)
+                    ok, res = command.execute(self.commands)
+                    command.handleResult(ok, res)
 
                     
                     if isinstance(command, Quiz):
