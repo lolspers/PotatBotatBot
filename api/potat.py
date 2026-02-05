@@ -138,7 +138,7 @@ def potatSend(message: str, cdRetries: int = 0) -> tuple[bool, str]:
         return (True, "Command returned no result")
 
     else:
-        result = data["data"]["text"]
+        result: str = data["data"]["text"]
 
     if result.startswith("✋⏰") or "ryanpo1Bwuh ⏰" in result:
         logger.warning("Tried to execute command while on cooldown: {data}")
@@ -147,5 +147,8 @@ def potatSend(message: str, cdRetries: int = 0) -> tuple[bool, str]:
     
     if " (You have five minutes to answer correctly, time starts now!)" in result:
         return (True, result.replace(" (You have five minutes to answer correctly, time starts now!)", ""))
+    
+    
+    result = result.strip().removeprefix("●").strip()
 
     return (True, f"{message} - {result}")
