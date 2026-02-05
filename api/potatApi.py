@@ -52,8 +52,10 @@ class PotatApi(ApiClient):
                 
                 return False, result
         
-        data["text"] = data.get("text", "Response returned no text").strip("\u034f").strip("¾").strip()
-
+        data["text"] = data.get("text", "Response returned no text")
+        data["text"] = data["text"].strip("\u034f").strip("¾").strip()
+        data["text"].removeprefix("●").strip()
+        
         if data["text"].startswith("\u270b\u23f0") or "ryanpo1Bwuh \u23f0" in data["text"]:
             logger.warning(f"PotatApi: tried to execute farming command on cooldown: {data=}")
             return False, data
