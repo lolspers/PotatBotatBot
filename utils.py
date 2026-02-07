@@ -1,18 +1,13 @@
-import json
-
-
-with open("quizes.json", "r") as file:
-    quizes: dict[str, str] = json.loads(file.read())
-
-
-unitToSeconds = {
-    "hours": 3600,
-    "minutes": 60,
-    "seconds": 1
+shortUnitToSeconds = {
+    "d": 86400,
+    "h": 3600,
+    "m": 60,
+    "s": 1
 }
 
 
 rankPrices: dict[int, int] = {
+    0: 1000,
     1: 1000,
     2: 5000,
     3: 10000,
@@ -29,34 +24,11 @@ shopPrices: dict[str, int] = {
 }
 
 
-farmingCommands: list[str] = ["potato", "steal", "trample", "cdr", "quiz"]
-shopItems: list[str] = [f"shop-{i}" for i in shopPrices.keys()]
-
-
-
-def rankPrice(prestige: int, rank: int) -> int:
-    if rank == 6:
-        return prestigePrice(prestige)
-    
-    return rankPrices[rank]
-
-
-
-def prestigePrice(prestige: int) -> int:
-    return 100_000 + (20_000 * prestige)
-
-
-
-def shopItemPrice(item: str, rank: int) -> int:
-    return shopPrices[item] * rank
-
-
-
 def formatSeconds(n: int | float) -> str:
     n = int(n)
     parts = []
     
-    for timeUnit, s in unitToSeconds.items():
+    for timeUnit, s in shortUnitToSeconds.items():
         if n < 0:
             s = -s
         
@@ -64,7 +36,7 @@ def formatSeconds(n: int | float) -> str:
         n %= s
         
         if value != 0:
-            parts.append(f"{value} {timeUnit if value != 1 else timeUnit[:-1]}")
+            parts.append(f"{value}{timeUnit if value != 1 else timeUnit[:-1]}")
 
 
     return " and ".join(", ".join(parts).rsplit(", ", 1)) if parts else "0 seconds"

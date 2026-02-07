@@ -1,12 +1,16 @@
+from __future__ import annotations
+from typing import TYPE_CHECKING
+
 import os
 import json
 
 from datetime import datetime
 from time import time
 
-from api.potat import getPotatUser
-from config import config
 from logger import logger
+
+if TYPE_CHECKING:
+    from classes.user import User
 
 
 basePath = "prestige/"
@@ -46,29 +50,13 @@ def getPrestigeStats() -> dict[str, dict[str, dict[str, int]]]:
         with open(statsPath, "w"):
             pass
 
-
     return {}
 
 
 
-def updatePrestigeStats() -> dict:
-    userdata = getPotatUser(config.username)
-
-    potatdata = userdata.get("potatoes")
-
-    if not potatdata:
-        logger.warning(f"Prestige: Tried to update prestige stats, but user '{config.username}' has never farmed before")
-        return {"error": "User has never farmed"}
-
-
-    prestige = str(potatdata["prestige"])
-
-    potato = potatdata["potato"]
-    steal = potatdata["steal"]
-    trample = potatdata["trample"]
-    quiz = potatdata["quiz"]
-    gamble = potatdata["gamble"]
-    duel = potatdata["duel"]
+def updatePrestigeStats(user: User) -> dict:
+    prestige = str(user.prestige)
+    commands = user.commands
 
 
     prestigeData = {
@@ -76,32 +64,32 @@ def updatePrestigeStats() -> dict:
             "prestigedAt": int(time())
         },
         "potato": {
-            "usage": potato["usage"]
+            "usage": commands.potato.usage
         },
         "steal": {
-            "usage": steal["theftCount"],
-            "stolenFrom": steal["stolenCount"]
+            "usage": commands.steal.usage,
+            "stolenFrom": commands.steal.stolenCount
         },
         "trample": {
-            "usage": trample["trampleCount"],
-            "trampled": trample["trampledCount"]
+            "usage": commands.trample.usage,
+            "trampled": commands.trample.trampledCount
         },
         "quiz": {
-            "attempted": quiz["attempted"],
-            "completed": quiz["completed"]
+            "attempted": commands.quiz.attempted,
+            "completed": commands.quiz.completed
         },
         "gamble": {
-            "wins": gamble["winCount"],
-            "losses": gamble["loseCount"],
-            "totalWon": gamble["totalWins"],
-            "totalLost": gamble["totalLosses"]
+            "wins": commands.gamble.wins,
+            "losses": commands.gamble.losses,
+            "totalWon": commands.gamble.earned,
+            "totalLost": commands.gamble.lost
         },
         "duel": {
-            "wins": duel["winCount"],
-            "losses": duel["loseCount"],
-            "totalWon": duel["totalWins"],
-            "totalLost": abs(duel["totalLosses"]),
-            "caughtLosses": duel["caughtLosses"]
+            "wins": commands.duel.wins,
+            "losses": commands.duel.losses,
+            "totalWon": commands.duel.earned,
+            "totalLost": commands.duel.lost,
+            "caughtLosses": commands.duel.caughtLosses
         }
     }
 
