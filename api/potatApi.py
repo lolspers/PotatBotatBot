@@ -36,8 +36,8 @@ class PotatApi(ApiClient):
 
         error: str = data.get("error", "")
         if error: 
-            # a failed steal returns an error, which contains the X emoji
-            if message.endswith("steal") and ("\u274c" in error or "[-" in error):
+            # a failed steal returns an error, which contains the X emoji (\u274c) or the => unicode char (\u21d2)
+            if message.endswith("steal") and ("\u274c" in error or "\u21d2" in error):
                 data["text"] = error
             
             else:
@@ -54,7 +54,7 @@ class PotatApi(ApiClient):
         
         data["text"] = data.get("text", "Response returned no text")
         data["text"] = data["text"].strip("\u034f").strip("¾").strip()
-        data["text"].removeprefix("●").strip()
+        data["text"] = data["text"].removesuffix("●").strip()
         
         if data["text"].startswith("\u270b\u23f0") or "ryanpo1Bwuh \u23f0" in data["text"]:
             logger.warning(f"PotatApi: tried to execute farming command on cooldown: {data=}")

@@ -115,9 +115,10 @@ class User(UserData):
 
         for i in parts:
             item, cooldown = i.split(": ")
+            cooldown = cooldown.strip()
             seconds = 0
 
-            if cooldown != "\u2705":
+            if "\u2705" not in cooldown:
                 for unit in cooldown.split(" and "):
                     seconds += int(unit[:-1]) * shortUnitToSeconds[unit[-1]]
                 
@@ -164,6 +165,10 @@ class User(UserData):
                     
                     if isinstance(command, Quiz):
                         self.answerQuiz()
+
+                        shopok, shopres = self.commands.shopQuiz._execute()
+                        self.commands.shopQuiz.handleResult(shopok, shopres)
+                    
 
                     elif isinstance(command, Prestige):
                         self.setData()

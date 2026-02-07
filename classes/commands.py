@@ -14,11 +14,11 @@ class Potato(Command):
     ) -> tuple[bool, dict]:
         if commands.shopGuard.canExecute:
             ok, res = commands.shopGuard._execute()
-            self.handleResult(ok, res)
+            commands.shopGuard.handleResult(ok, res)
 
         if commands.shopFertilizer.canExecute:
-            ok, res = commands.shopQuiz._execute()
-            self.handleResult(ok, res)
+            ok, res = commands.shopFertilizer._execute()
+            commands.shopFertilizer.handleResult(ok, res)
 
         return self._execute()
 
@@ -50,7 +50,7 @@ class Cdr(Command):
 
         if ok and commands.shopCdr.canExecute:
             shopok, shopres = commands.shopCdr._execute()
-            self.handleResult(shopok, shopres)
+            commands.shopCdr.handleResult(shopok, shopres)
 
         return ok, res
     
@@ -64,18 +64,6 @@ class Quiz(Command):
         self.trigger: str = "quiz"
         self.attempted: int = 0
         self.completed: int = 0
-
-    def execute(
-            self,
-            commands # type: Commands
-    ) -> tuple[bool, dict]:
-        ok, res = self._execute()
-
-        if ok and commands.shopQuiz.canExecute:
-            shopok, shopres = commands.shopQuiz._execute()
-            self.handleResult(shopok, shopres)
-
-        return ok, res
 
 
 
