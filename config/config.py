@@ -44,6 +44,7 @@ class Config:
         self.potatToken: str = str(data.get("potatToken", ""))
         self.printColor: bool = bool(data.get("printInColor"))
         self.printTime: bool = bool(data.get("printTime"))
+        self.printEmojis: bool = bool(data.get("printEmojis"))
         self.usePotat: bool = bool(data.get("usePotatApi"))
         self.loggingLevel: LoggingLevel = data.get("loggingLevel", 30)
 
@@ -99,6 +100,7 @@ class Config:
             "potatToken": self.potatToken,
             "printInColor": self.printColor,
             "printTime": self.printTime,
+            "printEmojis": self.printEmojis,
             "usePotatApi": self.usePotat,
             "farmingCommands": self.farmingCommands,
             "shopItems": self.shopItems,

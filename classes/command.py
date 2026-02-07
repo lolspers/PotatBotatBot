@@ -5,7 +5,7 @@ from api import potat, twitch
 from api.exceptions import Unauthorized
 from classes.userdata import UserData
 from config import config
-from logger import logger, clprint
+from logger import logger, clprint, demojize
 
 
 class Command(UserData):
@@ -67,7 +67,7 @@ class Command(UserData):
             logger.error(f"Failed to execute command \"{self.trigger}\": {res=}")
 
             message: str | dict = res.get("text", res.get("error", res.get("message", res)))
-            clprint(f"Failed to execute command \"{self.trigger}\":", ascii(str(message)), style=[Style.DIM], globalFore=Fore.RED)
+            clprint(f"Failed to execute command \"{self.trigger}\":", demojize(str(message), escape=True), style=[Style.DIM], globalFore=Fore.RED)
             return False
 
         else:
@@ -75,7 +75,7 @@ class Command(UserData):
 
             messages = [f"Executed command \"{self.trigger}\""]
             if res.get("text"):
-                messages.append(ascii(res["text"]))
+                messages.append(demojize(res["text"], escape=True))
 
             clprint(*messages, style=[Style.DIM])
 

@@ -69,7 +69,8 @@ class Inputs:
                 "refetch": "Force refetching of potatbotat cooldowns",
                 "stats": "Manually update prestige stats for the current prestige, if they do not exist yet",
                 "color": "Toggle printing in color",
-                "time": "Toggle printing time"
+                "time": "Toggle printing time",
+                "emoji": "Toggle printing emojis"
             },
             "Manual changes to config.json require a restart to take effect.",
             ""
@@ -156,6 +157,12 @@ class Inputs:
                     enable = not config.printTime
                     config.printTime = enable
                     cprint(f"{"Enabled" if enable else "Disabled"} printing time", fore=Fore.CYAN)
+
+
+                elif uInput in ["emoji", "emojis"]:
+                    enable = not config.printEmojis
+                    config.printEmojis = enable
+                    cprint(f"{"Enabled" if enable else "Disabled"} printing emojis", fore=Fore.CYAN)
 
 
                 else:

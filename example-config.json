@@ -9,6 +9,7 @@
     "potatToken": "",
     "printInColor": true,
     "printTime": true,
+    "printEmojis": false,
     "usePotatApi": false,
     "farmingCommands": {
         "potato": true,

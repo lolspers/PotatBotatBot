@@ -71,6 +71,7 @@ Copy the code from the link and in `config.json` set `authCode` to the code you 
 | ------- | --------- | ----------- | ------- |
 | `printInColor` | bool | If true, prints text in the console in a certain color, based on the type of message. | `true` |
 | `printTime` | bool | If true, prepends the time to text printed in the console. (`[HH:MM:SS]`) | `true` |
+| `printEmojis` | bool | If true, prints emojis to the console (🥔). If false, prints the text version (:potato:). | `false` |
 | `usePotatApi` | bool | If true, executes commands through [PotatBotat api](https://potat.app/api/docs) instead of executing it through twitch chat. | `false` |
 | `farmingCommands` | dict[str, bool] | Commands set to `true` will be automated. | <details> `{ "potato": true, "steal": true, "trample": false, "cdr": true, "quiz": false }` </details> |
 | `shopItems` | dict[str, bool] | Shop items set to `true` will be automated. These will only be bought right after or before the command they affect has been executed. | <details> `{ "shop-fertilizer": true, "shop-guard": true, "shop-cdr": true, "shop-quiz": false }` </details> |
@@ -93,6 +94,7 @@ Copy the code from the link and in `config.json` set `authCode` to the code you 
     "potatToken": "COPY_POTAT_TOKEN_HERE",
     "printInColor": true,
     "printTime": true,
+    "printEmojis": false,
     "usePotatApi": false,
     "farmingCommands": {
         "potato": true,

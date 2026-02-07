@@ -2,6 +2,7 @@ import os
 import logging
 import colorama
 from datetime import datetime
+from emoji import emojize as _emojize, demojize as _demojize
 
 from config import config
 
@@ -22,7 +23,21 @@ colorama.init(autoreset=True)
 
 
 
+def demojize(text: str, escape: bool = False) -> str:
+    if escape:
+        text = ascii(_demojize(text))
+    
+    return _emojize(text) if config.printEmojis else _demojize(text)
+
+
+
 def tprint(*values, time: bool = True):
+    result = []
+    for value in values:
+        result.append(demojize(value) if isinstance(value, str) else value)
+
+    values = tuple(result)
+
     if config.printTime and time:
         dt = datetime.now().strftime("[%H:%M:%S]")
 
