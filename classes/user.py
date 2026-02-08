@@ -166,8 +166,9 @@ class User(UserData):
                     if isinstance(command, Quiz):
                         self.answerQuiz()
 
-                        shopok, shopres = self.commands.shopQuiz._execute()
-                        self.commands.shopQuiz.handleResult(shopok, shopres)
+                        if self.commands.shopQuiz.canExecute:
+                            shopok, shopres = self.commands.shopQuiz._execute()
+                            self.commands.shopQuiz.handleResult(shopok, shopres)
                     
 
                     elif isinstance(command, Prestige):
