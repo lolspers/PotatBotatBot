@@ -21,9 +21,6 @@ class TwitchApi(ApiClient):
             "Client-Id": config.clientId
         }
 
-        if config.authCode:
-            self.generateToken()
-
 
     def getUser(self, uid: str) -> dict:
         params: dict = {
