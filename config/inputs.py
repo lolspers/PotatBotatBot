@@ -6,6 +6,7 @@ from queue import Queue
 
 from . import config
 from .config import defaultFarmingCommands, defaultShopItems
+from api import twitch
 from logger import logger, cprint, clprint
 from prestige import updatePrestigeStats
 
@@ -119,6 +120,9 @@ class Inputs:
 
 
                 elif uInput in ["twitch", "twitchapi"]:
+                    if config.authCode:
+                        twitch.generateToken()
+                    
                     if not canEnableTwitch():
                         cprint(f"Failed to enable twitch api: one or more credentials in config.json are not set", fore=Fore.RED)
                         continue

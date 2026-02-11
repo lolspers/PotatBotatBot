@@ -29,6 +29,9 @@ class User(UserData):
             if not canEnableTwitch():
                 raise StopBot("Tried to use twitch api, but one or more twitch credentials are not set")
             
+            if config.authCode:
+                twitch.generateToken()
+            
             UserData.twitchUser, UserData.twitchUid = twitch.getSelf()
             UserData.channel.setChannelData()
 
