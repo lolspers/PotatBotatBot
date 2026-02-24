@@ -330,5 +330,57 @@
     "Emily bought 8 kilograms of potatoes. She used 3/4 of them to make mashed potatoes. How many kilograms of potatoes did she use?":
     "6",
     "A chef is making a potato-based dessert. The recipe calls for 10 potatoes, but the chef only has 7. Each potato can be replaced with a potato substitute, but using a substitute decreases the final score by 20%. If the chef wants to maximize the score, how many potato substitutes should they use?":
-    "3"
+    "3",
+    "A bag has 5 red potatoes and 7 golden potatoes. If you draw two potatoes without replacement, what is the probability that both are golden potatoes?":
+    "0.318",
+    "A bin holds 120 potatoes, each averaging 0.18 kilograms. What is the total weight in kilograms of the filled bin?":
+    "21.6",
+    "A farm grows three potato varieties: 40% weigh 180 grams, 35% weigh 210 grams, and 25% weigh 260 grams. What is the average weight of a randomly chosen potato?":
+    "210.5",
+    "A farmer fills 32 baskets with potatoes. Each basket holds 14 potatoes, and 3 baskets spill half their contents. How many potatoes remain in the baskets?":
+    "427",
+    "A farmer harvests 270 kilograms of potatoes and packs them into crates that hold 18 kilograms each. How many full crates can be packed?":
+    "15",
+    "A farmer harvests 48 kilograms of potatoes and packs them into crates that hold 6 kilograms each. How many full crates can the farmer make?":
+    "8",
+    "A fertilizer recommends 50 grams per square meter. If a rectangular potato plot is 18 meters by 9 meters, how many grams of fertilizer are needed?":
+    "8100",
+    "A market sells 1,800 potatoes at $0.35 each during a weekend fair. How many dollars of revenue do the potatoes generate?":
+    "630",
+    "A mash blend uses 3 kilograms of russet potatoes and 2 kilograms of Yukon Golds. If 15% of the total mix is trimmed as waste, how many kilograms of usable potatoes remain?":
+    "4.25",
+    "A mash recipe uses 1.2 kilograms of potatoes and 60 grams of butter. Scaling to serve 25% more people, how many kilograms of potatoes are needed?":
+    "1.5",
+    "A potato field has 12 rows, each 18 meters long, with potato plants spaced every 0.6 meters. If each plant yields 0.25 kilograms of potatoes, how many kilograms are harvested in total?":
+    "90",
+    "A potato grader outputs 180 potatoes per minute for 35 minutes, then slows to 120 per minute for the next 25 minutes. How many potatoes are graded in total?":
+    "9300",
+    "A potato stew recipe uses 1/3 cup of herbs for a total yield of 3.5 kilograms of stew. If you only want to prepare 3 servings, and each serving weighs 350 grams, how many cups of herbs should you use?":
+    "0.1",
+    "A rectangular potato field measures 20 meters by 15 meters. If plants are placed every 0.5 meters in both directions, how many potato plants fit in the field?":
+    "1200",
+    "A seed potato program ships 2,400 seed potatoes. If 8% fail sprouting and 6% more are culled for disease, how many viable seed potatoes remain?":
+    "2076",
+    "A storage pile of 500 kilograms of potatoes increases in weight by 4% each week due to moisture gain. After 6 weeks, what is the total weight in kilograms?":
+    "633",
+    "Fresh potatoes weigh 3.2 kilograms at 78% water. After dehydrating to 12% water, what is their final weight in kilograms?":
+    "0.8",
+    "Nine potatoes are cut into 10 wedges each, but 8% of the wedges burn. How many good wedges remain?":
+    "83",
+    "Packers fill 75 sacks with 22 potatoes each. If 4% of the potatoes are damaged and removed, how many undamaged potatoes remain?":
+    "1584",
+    "Potato starch slurry is mixed at a 5:2 water-to-starch ratio by volume. If you need 3.5 liters of slurry, how many liters of starch are required?":
+    "1",
+    "Roasting a batch of potatoes causes an 18% weight loss. If you start with 4 kilograms of potatoes, what is the cooked weight after roasting?":
+    "3.28",
+    "A potato battery powers a 5-volt circuit at 0.015 amperes for 12 hours. How many watt-hours of energy does the potato battery deliver?":
+    "0.9",
+    "A mashed potato recipe uses 1.5 kilograms of potatoes to serve 6 people. How many kilograms of potatoes are needed to serve 14 people with the same portion size?":
+    "3.5",
+    "A farmer stores 50 kilograms of potatoes for winter. If they lose 12% of their weight due to dehydration, what is the remaining weight?":
+    "44",
+    "Potato prices rise 6% each quarter. If a potato costs $0.40 now, what is the price after three quarters of increases?":
+    "0.48",
+    "An irrigation hose delivers 1.8 liters of water per minute to potato rows. How many liters are used during a 50-minute watering?":
+    "90"
 }
