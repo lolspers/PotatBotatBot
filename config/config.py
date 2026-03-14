@@ -18,7 +18,7 @@ defaultShopItems = {
     "shop-quiz": False
 }
 
-type LoggingLevel = Literal[10, 20, 30, 40, 50]
+type LoggingLevel = Literal[0, 10, 20, 30, 40, 50]
 
 
 class Config:
@@ -53,7 +53,7 @@ class Config:
         if self.channelId and not re.fullmatch(r"\d*", self.channelId):
             raise ValueError("Config: channelId should be a string of numbers")
 
-        if self.loggingLevel not in [10, 20, 30, 40, 50]:
+        if self.loggingLevel not in [0, 10, 20, 30, 40, 50]:
             self.loggingLevel = 30
 
 
