@@ -17,6 +17,11 @@ class Command(UserData):
     
 
     @property
+    def name(self) -> str:
+        return self.trigger.replace(" ", "-")
+    
+
+    @property
     def cost(self) -> int:
         return self.baseCost
 
@@ -37,23 +42,28 @@ class Command(UserData):
         if self.readyAt > time():
             return False
         return True
+    
+
+    @property
+    def usePotat(self) -> bool:
+        return (config.usePotat and self.name not in config.oppositePlatform) or (not config.usePotat and self.name in config.oppositePlatform)
 
 
 
     def _execute(self) -> tuple[bool, dict]:
         logger.debug(f"Executing command: {self.trigger}")
 
-        if not config.usePotat:
+        if self.usePotat:
+            message = "@potatbotat " + self.trigger
+            ok, res = potat.execute(message)
+                
+        else:
             message = self.channel.prefix + self.trigger
             try:
                 ok, res = twitch.send(self.channel.channelId, self.uid, message)
             except Unauthorized:
                 twitch.refreshAccessToken()
                 ok, res = twitch.send(self.channel.channelId, self.uid, message)
-                
-        else:
-            message = "@potatbotat " + self.trigger
-            ok, res = potat.execute(message)
 
         return ok, res
     
@@ -94,4 +104,4 @@ class ShopItem(Command):
 
     @property
     def enabled(self) -> bool:
-        return config.shopItems[self.trigger.replace(" ", "-")]
+        return config.shopItems[self.name]

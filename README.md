@@ -75,6 +75,7 @@ Copy the code from the link and in `config.json` set `authCode` to the code you 
 | `usePotatApi` | bool | If true, executes commands through [PotatBotat api](https://potat.app/api/docs) instead of executing it through twitch chat. | `false` |
 | `farmingCommands` | dict[str, bool] | Commands set to `true` will be automated. | <details> `{ "potato": true, "steal": true, "trample": false, "cdr": true, "quiz": false }` </details> |
 | `shopItems` | dict[str, bool] | Shop items set to `true` will be automated. These will only be bought right after or before the command they affect has been executed. | <details> `{ "shop-fertilizer": true, "shop-guard": true, "shop-cdr": true, "shop-quiz": false }` </details> |
+| `oppositePlatform` | list[str] | Commands/Shop items that should be executed on the opposite platform than `usePotatApi` is set to. Possible values: `potato`, `steal`, `trample`, `cdr`, `quiz`, `shop-fertilizer`, `shop-guard`, `shop-cdr`, `shop-quiz` | `[]` |
 | `loggingLevel` | int | The level threshold of the logger. Allowed values are: 0 (NOTSET), 10 (DEBUG), 20 (INFO), 30 (WARNING), 40 (ERROR), 50 (CRITICAL). | `30` |
 
 > [!WARNING]
@@ -109,6 +110,7 @@ Copy the code from the link and in `config.json` set `authCode` to the code you 
         "shop-cdr": true,
         "shop-quiz": false
     },
+    "oppositePlatform": [],
     "loggingLevel": 30
 }
 ```

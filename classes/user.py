@@ -25,7 +25,7 @@ class User(UserData):
         UserData.channel = PotatChannel(config.channelId, joinRequired=True)
         UserData.potatUser, UserData.potatUid = potat.getSelf()
 
-        if not config.usePotat:
+        if not config.usePotat or (config.usePotat and config.oppositePlatform):
             if not canEnableTwitch():
                 raise StopBot("Tried to use twitch api, but one or more twitch credentials are not set")
 
@@ -122,6 +122,7 @@ class User(UserData):
             seconds = 0
 
             if "\u2705" not in cooldown:
+                unit = "0s"
                 for unit in cooldown.split(" and "):
                     seconds += int(unit[:-1]) * shortUnitToSeconds[unit[-1]]
                 
@@ -148,7 +149,7 @@ class User(UserData):
             if type(command) in [Rankup, Prestige]:
                 continue
             if command.enabled:
-                cprint(f"{command.trigger.replace(" ", "-")} ready {relative(command.readyAt - time())}", style=Style.DIM)
+                cprint(f"{command.name} ready {relative(command.readyAt - time())}", style=Style.DIM)
         print()
                 
 
@@ -221,7 +222,7 @@ class User(UserData):
         
         sleep(6)
 
-        if config.usePotat:
+        if self.commands.quiz.usePotat:
             ok, res = potat.execute(f"a {answer}")
         else:
             ok, res = twitch.send(self.channel.channelId, self.uid, str(answer))

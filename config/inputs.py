@@ -121,7 +121,7 @@ class Inputs:
 
                 elif uInput in ["twitch", "twitchapi"]:
                     if not canEnableTwitch():
-                        cprint(f"Failed to enable twitch api: one or more credentials in config.json are not set", fore=Fore.RED)
+                        cprint("Failed to enable twitch api: one or more credentials in config.json are not set", fore=Fore.RED)
                         continue
                     
                     if config.authCode:

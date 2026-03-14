@@ -24,5 +24,6 @@
         "shop-cdr": true,
         "shop-quiz": false
     },
+    "oppositePlatform": [],
     "loggingLevel": 30
 }

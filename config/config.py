@@ -32,7 +32,7 @@ class Config:
                 data: dict = json.load(file)
 
         except FileNotFoundError:
-            raise Exception(f"No config.json file found")
+            raise Exception("No config.json file found")
         
 
         self.channelId: str = str(data.get("channelId", ""))
@@ -46,6 +46,7 @@ class Config:
         self.printTime: bool = bool(data.get("printTime"))
         self.printEmojis: bool = bool(data.get("printEmojis"))
         self.usePotat: bool = bool(data.get("usePotatApi"))
+        self.oppositePlatform: list = list(data.get("oppositePlatform", []))
         self.loggingLevel: LoggingLevel = data.get("loggingLevel", 30)
 
 
@@ -104,6 +105,7 @@ class Config:
             "usePotatApi": self.usePotat,
             "farmingCommands": self.farmingCommands,
             "shopItems": self.shopItems,
+            "oppositePlatform": self.oppositePlatform,
             "loggingLevel": self.loggingLevel
         }
 

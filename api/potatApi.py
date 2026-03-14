@@ -73,6 +73,6 @@ class PotatApi(ApiClient):
         parts: list[str] = res["text"].split("●", 2)
 
         username = parts[0].strip().removeprefix("@").lower()
-        userId = parts[1].split("ID: ", 1)[1]
+        userId = parts[1].split("ID: ", 1)[1].strip()
 
         return username, userId
