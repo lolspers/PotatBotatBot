@@ -1,17 +1,18 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING
-from colorama import Fore, Style, Back
-from threading import Thread
+
 from queue import Queue
+from threading import Thread
+from typing import TYPE_CHECKING
+
+from colorama import Fore, Style
+
+import logger as loggerModule
+from api import twitch
+from logger import clprint, cprint, logger
+from prestige import updatePrestigeStats
 
 from . import config
 from .config import defaultFarmingCommands, defaultShopItems
-from api import twitch
-from logger import logger, cprint, clprint
-from prestige import updatePrestigeStats
-
-import logger as loggerModule
-
 
 if TYPE_CHECKING:
     from classes.user import User
@@ -20,14 +21,11 @@ if TYPE_CHECKING:
 def canEnableTwitch() -> bool:
     if not config.clientSecret or not config.clientId:
         return False
-    
+
     if config.authCode:
         return True
-    
-    if not config.twitchToken or not config.refreshToken:
-        return False
 
-    return True
+    return bool(config.twitchToken and config.refreshToken)
 
 
 class Inputs:
@@ -45,7 +43,8 @@ class Inputs:
     def printCommands(self) -> None:
         potatCmdMsg: str = "Toggle auto farming for"
         potatShopMsg: str = "Toggle auto buying for"
-        maxCmdLength: int = max(len(max(defaultFarmingCommands, key=len)), len(max(defaultShopItems, key=len)))
+        maxCmdLength: int = max(len(max(defaultFarmingCommands, key=len)),
+                                len(max(defaultShopItems, key=len)))
         spaceMargin = maxCmdLength * 2 + len(potatCmdMsg)
 
         lines: list[dict[str, str] | str] = [
@@ -58,23 +57,26 @@ class Inputs:
             },
             "",
             {
-                command: f"{f"{potatCmdMsg} {command}": <{spaceMargin-len(command)+2}} (Currently set to {config.farmingCommands[command]})"
+                command: f"{f"{potatCmdMsg} {command}": <{spaceMargin-len(command)+2}} " \
+                            f"(Currently set to {config.farmingCommands[command]})"
                 for command in list(defaultFarmingCommands.keys())
             },
             {
-                item: f"{f"{potatShopMsg} {item}": <{spaceMargin-len(item)+2}} (Currently set to {config.shopItems[item]})"
+                item: f"{f"{potatShopMsg} {item}": <{spaceMargin-len(item)+2}} " \
+                        f"(Currently set to {config.shopItems[item]})"
                 for item in list(defaultShopItems.keys())
             },
             "",
             {
                 "refetch": "Force refetching of potatbotat cooldowns",
-                "stats": "Manually update prestige stats for the current prestige, if they do not exist yet",
+                "stats": "Manually update prestige stats for the current prestige, " \
+                            "if they do not exist yet",
                 "color": "Toggle printing in color",
                 "time": "Toggle printing time",
-                "emoji": "Toggle printing emojis"
+                "emoji": "Toggle printing emojis",
             },
             "Manual changes to config.json require a restart to take effect.",
-            ""
+            "",
         ]
 
         for line in lines:
@@ -105,25 +107,29 @@ class Inputs:
                     break
 
 
-                elif uInput in defaultFarmingCommands:
+                if uInput in defaultFarmingCommands:
                     enable = not config.farmingCommands[uInput]
                     config.farmingCommands[uInput] = enable
-                    cprint(f"{"Enabled" if enable else "Disabled"} command '{uInput}'", fore=Fore.CYAN)
+                    cprint(f"{"Enabled" if enable else "Disabled"} command '{uInput}'",
+                           fore=Fore.CYAN)
                     self.user.setCooldowns(shop=False)
 
 
                 elif uInput in defaultShopItems:
                     enable = not config.shopItems[uInput]
                     config.shopItems[uInput] = enable
-                    cprint(f"{"Enabled" if enable else "Disabled"} auto buying for '{uInput}'", fore=Fore.CYAN)
+                    cprint(f"{"Enabled" if enable else "Disabled"} auto buying for '{uInput}'",
+                           fore=Fore.CYAN)
                     self.user.setCooldowns()
 
 
                 elif uInput in ["twitch", "twitchapi"]:
                     if not canEnableTwitch():
-                        cprint("Failed to enable twitch api: one or more credentials in config.json are not set", fore=Fore.RED)
+                        cprint("Failed to enable twitch api: " \
+                               "one or more credentials in config.json are not set",
+                               fore=Fore.RED)
                         continue
-                    
+
                     if config.authCode:
                         twitch.generateToken()
 
@@ -146,7 +152,8 @@ class Inputs:
                     result = updatePrestigeStats(self.user)
 
                     if result.get("error"):
-                        clprint("Failed to update prestige stats:", result["error"], style=[Style.BRIGHT], globalFore=Fore.RED)
+                        clprint("Failed to update prestige stats:", result["error"],
+                                style=[Style.BRIGHT], globalFore=Fore.RED)
                     else:
                         cprint("Updated prestige stats", fore=Fore.GREEN, style=Style.DIM)
 
@@ -154,7 +161,8 @@ class Inputs:
                 elif uInput == "color":
                     enable = not config.printColor
                     config.printColor = enable
-                    cprint(f"{"Enabled" if enable else "Disabled"} printing in color", fore=Fore.CYAN)
+                    cprint(f"{"Enabled" if enable else "Disabled"} printing in color",
+                           fore=Fore.CYAN)
 
 
                 elif uInput == "time":

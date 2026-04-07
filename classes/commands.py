@@ -1,6 +1,7 @@
+from __future__ import annotations
+
 from classes.command import Command, ShopItem
 from utils import rankPrices
-
 
 
 class Potato(Command):
@@ -10,7 +11,7 @@ class Potato(Command):
 
     def execute(
             self,
-            commands # type: Commands
+            commands: Commands,
     ) -> tuple[bool, dict]:
         if commands.shopGuard.canExecute:
             ok, res = commands.shopGuard._execute()
@@ -44,7 +45,7 @@ class Cdr(Command):
 
     def execute(
             self,
-            commands # type: Commands
+            commands: Commands,
     ) -> tuple[bool, dict]:
         ok, res = self._execute()
 
@@ -53,7 +54,7 @@ class Cdr(Command):
             commands.shopCdr.handleResult(shopok, shopres)
 
         return ok, res
-    
+
     @property
     def cost(self) -> int:
         return int(self.baseCost * self.rank * (1 + self.prestige * 0.1))
@@ -71,15 +72,15 @@ class Rankup(Command):
     def __init__(self) -> None:
         self.trigger = "rankup"
         self.ready = True
-    
+
     @property
     def cost(self) -> int:
         return rankPrices[self.rank]
-    
+
     @property
     def enabled(self) -> bool:
         return bool(self.rank < 6)
-    
+
 
 class Prestige(Command):
     def __init__(self) -> None:
@@ -89,11 +90,11 @@ class Prestige(Command):
     @property
     def cost(self) -> int:
         return rankPrices[6] + 20_000 * self.prestige
-    
+
     @property
     def enabled(self) -> bool:
         return bool(self.rank == 6)
-    
+
 
 
 class ShopCdr(ShopItem):
@@ -165,12 +166,12 @@ class Commands:
             self.cdr,
             self.quiz,
             self.rankup,
-            self.prestige
+            self.prestige,
         ]
 
         self.shopItems: list[ShopItem] = [
             self.shopCdr,
             self.shopFertilizer,
             self.shopGuard,
-            self.shopQuiz
+            self.shopQuiz,
         ]

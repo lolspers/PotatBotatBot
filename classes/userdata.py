@@ -18,7 +18,7 @@ class UserData:
     @property
     def username(self) -> str:
         return self.potatUser if config.usePotat else self.twitchUser
-    
+
     @property
     def uid(self) -> str:
         return self.potatUid if config.usePotat else self.twitchUid

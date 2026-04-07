@@ -1,7 +1,6 @@
-import re
 import json
+import re
 from typing import Literal
-
 
 filepath = "config.json"
 defaultFarmingCommands = {
@@ -9,13 +8,13 @@ defaultFarmingCommands = {
     "steal": True,
     "trample": False,
     "cdr": True,
-    "quiz": False
+    "quiz": False,
 }
 defaultShopItems = {
     "shop-fertilizer": True,
     "shop-guard": True,
     "shop-cdr": True,
-    "shop-quiz": False
+    "shop-quiz": False,
 }
 
 type LoggingLevel = Literal[0, 10, 20, 30, 40, 50]
@@ -28,12 +27,12 @@ class Config:
 
     def loadConfig(self) -> None:
         try:
-            with open(filepath, "r") as file:
+            with open(filepath) as file:
                 data: dict = json.load(file)
 
-        except FileNotFoundError:
-            raise Exception("No config.json file found")
-        
+        except FileNotFoundError as e:
+            raise Exception("No config.json file found") from e
+
 
         self.channelId: str = str(data.get("channelId", ""))
         self.twitchToken: str = str(data.get("twitchToken", ""))
@@ -61,7 +60,7 @@ class Config:
         farmingCommands = data.get("farmingCommands")
         if not farmingCommands or not isinstance(farmingCommands, dict):
             self.farmingCommands = defaultFarmingCommands
-        
+
         else:
             for key, value in farmingCommands.items():
                 if key not in defaultFarmingCommands:
@@ -77,7 +76,7 @@ class Config:
         shopItems = data.get("shopItems")
         if not shopItems or not isinstance(shopItems, dict):
             self.shopItems = defaultShopItems
-        
+
         else:
             for key, value in shopItems.items():
                 if key not in defaultShopItems:
@@ -87,7 +86,7 @@ class Config:
                     value = defaultShopItems[key]
 
                 self.shopItems[key] = value
-        
+
 
 
     def dumpConfig(self) -> None:
@@ -106,7 +105,7 @@ class Config:
             "farmingCommands": self.farmingCommands,
             "shopItems": self.shopItems,
             "oppositePlatform": self.oppositePlatform,
-            "loggingLevel": self.loggingLevel
+            "loggingLevel": self.loggingLevel,
         }
 
         with open(filepath, "w") as file:

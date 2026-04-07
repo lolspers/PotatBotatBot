@@ -1,21 +1,20 @@
 import json
+from time import sleep, time
 
-from colorama import Fore, Style, Back
-from time import time, sleep
+from colorama import Fore, Style
 
 from api import potat, twitch
+from classes.channel import PotatChannel
+from classes.commands import Commands, Prestige, Quiz, Rankup
+from classes.userdata import UserData
 from config import config
 from config.inputs import canEnableTwitch
-from classes.channel import PotatChannel
-from classes.commands import Commands, Quiz, Rankup, Prestige
-from classes.userdata import UserData
-from prestige import updatePrestigeStats
 from exceptions import StopBot
-from logger import logger, cprint, clprint
-from utils import shortUnitToSeconds, relative
+from logger import clprint, cprint, logger
+from prestige import updatePrestigeStats
+from utils import relative, shortUnitToSeconds
 
-
-with open("quizes.json", "r") as file:
+with open("quizes.json") as file:
     quizes: dict[str, str] = json.loads(file.read())
 
 
@@ -27,11 +26,12 @@ class User(UserData):
 
         if not config.usePotat or (config.usePotat and config.oppositePlatform):
             if not canEnableTwitch():
-                raise StopBot("Tried to use twitch api, but one or more twitch credentials are not set")
+                raise StopBot("Tried to use twitch api, " \
+                              "but one or more twitch credentials are not set")
 
             if config.authCode:
                 twitch.generateToken()
-            
+
             UserData.twitchUser, UserData.twitchUid = twitch.getSelf()
             UserData.channel.setChannelData()
 
@@ -50,18 +50,20 @@ class User(UserData):
         if not ok:
             if data.get("status") == 404:
                 raise StopBot(f"Potat user '{self.username}' not found")
-            
+
             logger.critical(f"Failed to get user stats: {data=}")
-            raise Exception(f"Failed to get potat user data: {data.get("error", data)} ({data.get("status")})")
-        
+            raise Exception("Failed to get potat user data: " \
+                            f"{data.get("error", data)} ({data.get("status")})")
+
         d = data.get("potatoes")
 
         if not d:
             logger.critical(f"No potato data found for user '{self.username}'")
             raise StopBot(f"No potato data found for user '{self.username}'")
-        
-        getCmdCd = lambda data: data["readyAt"] // 1000 if data["readyAt"] else 0 
-        
+
+        def getCmdCd(data: dict) -> int:
+            return data["readyAt"] // 1000 if data["readyAt"] else 0
+
         self.joinedAt: str = d["joinedAt"]
         UserData.prestige = d["prestige"]
         UserData.rank = d["rank"]
@@ -80,12 +82,12 @@ class User(UserData):
         self.commands.trample.ready = d["trample"]["ready"]
         self.commands.trample.usage = d["trample"]["trampleCount"]
         self.commands.trample.trampledCount = d["trample"]["trampledCount"]
-        
+
         self.commands.steal.readyAt = getCmdCd(d["steal"])
         self.commands.steal.ready = d["steal"]["ready"]
         self.commands.steal.usage = d["steal"]["theftCount"]
         self.commands.steal.stolenCount = d["steal"]["stolenCount"]
-        
+
         self.commands.quiz.readyAt = getCmdCd(d["quiz"])
         self.commands.quiz.ready = d["quiz"]["ready"]
         self.commands.quiz.attempted = d["quiz"]["attempted"]
@@ -110,8 +112,9 @@ class User(UserData):
         ok, res = potat.execute("status")
 
         if not ok:
-            raise Exception(f"Failed to get shop cooldowns: {res.get("text", res.get("error", res))}")
-                
+            raise Exception("Failed to get shop cooldowns: "
+                            + res.get("text", res.get("error", res)))
+
         message: str = res["text"].lower().strip()
         parts: list[str] = message.rsplit(" ● ", 4)[1:]
         cooldowns: dict[str, int] = {}
@@ -125,9 +128,9 @@ class User(UserData):
                 unit = "0s"
                 for unit in cooldown.split(" and "):
                     seconds += int(unit[:-1]) * shortUnitToSeconds[unit[-1]]
-                
+
                 seconds += shortUnitToSeconds[unit[-1]] # status rounds down
-            
+
             cooldowns[item] = int(time() + seconds)
 
         self.commands.shopQuiz.readyAt = cooldowns["shop-quiz"]
@@ -149,9 +152,10 @@ class User(UserData):
             if type(command) in [Rankup, Prestige]:
                 continue
             if command.enabled:
-                cprint(f"{command.name} ready {relative(command.readyAt - time())}", style=Style.DIM)
+                cprint(f"{command.name} ready {relative(command.readyAt - time())}",
+                       style=Style.DIM)
         print()
-                
+
 
 
     def executeCommands(self) -> None:
@@ -166,26 +170,29 @@ class User(UserData):
                     ok, res = command.execute(self.commands)
                     command.handleResult(ok, res)
 
-                    
+
                     if isinstance(command, Quiz):
                         self.answerQuiz()
 
                         shopok, shopres = self.commands.shopQuiz._execute()
                         self.commands.shopQuiz.handleResult(shopok, shopres)
-                    
+
 
                     elif isinstance(command, Prestige):
                         self.setData()
                         res = updatePrestigeStats(self)
 
                         if res.get("error"):
-                            clprint("Failed to update prestige stats:", res["error"], style=[Style.DIM], globalFore=Fore.RED)
+                            clprint("Failed to update prestige stats:", res["error"],
+                                    style=[Style.DIM], globalFore=Fore.RED)
                         else:
                             cprint("Updated prestige stats", fore=Fore.CYAN)
 
             except Exception as e:
                 logger.error(f"Error while executing command \"{command.trigger}\"", exc_info=e)
-                clprint(f"Error while executing \"{command.trigger}\":", f"{type(e).__name__}: {str(e)}", style=[Style.DIM], globalFore=Fore.RED)
+                clprint(f"Error while executing \"{command.trigger}\":",
+                        f"{type(e).__name__}: {e!s}",
+                        style=[Style.DIM], globalFore=Fore.RED)
 
         if executedCommand:
             sleep(5)
@@ -202,14 +209,14 @@ class User(UserData):
 
         if "forgot:" in quiz:
             quiz = quiz.split("forgot:", 1)[-1].strip()
-        
+
         elif not ok:
             logger.error(f"Failed to get quiz: {res}")
             error = ascii(str(res.get("text", res.get("error", res))))
             clprint("Failed to get quiz:", error, style=[Style.DIM], globalFore=Fore.RED)
             return
-        
-        
+
+
         quiz = quiz.removesuffix("(You have five minutes to answer correctly, time starts now!)")
         quiz = quiz.strip()
 
@@ -217,9 +224,10 @@ class User(UserData):
 
         if not answer:
             logger.warning(f"No answer found for quiz: {quiz=}")
-            clprint("Failed to answer quiz:", f"No answer found for quiz \"{quiz}\"", style=[Style.DIM], globalFore=Fore.RED)
+            clprint("Failed to answer quiz:", f"No answer found for quiz \"{quiz}\"",
+                    style=[Style.DIM], globalFore=Fore.RED)
             return
-        
+
         sleep(6)
 
         if self.commands.quiz.usePotat:
@@ -230,7 +238,8 @@ class User(UserData):
         if not ok:
             logger.error(f"Failed send quiz answer: {res=}")
             error = ascii(str(res.get("text", res.get("error", res))))
-            clprint(f"Failed to send quiz answer \"{answer}\":", error, style=[Style.DIM], globalFore=Fore.RED)
+            clprint(f"Failed to send quiz answer \"{answer}\":", error,
+                    style=[Style.DIM], globalFore=Fore.RED)
             return
-        
+
         clprint("Answered quiz:", str(answer), style=[Style.DIM])

@@ -1,11 +1,16 @@
-from colorama import Fore, Style, Back
-from time import time, sleep
+from time import sleep, time
+from typing import TYPE_CHECKING
+
+from colorama import Fore, Style
 
 from api import potat, twitch
 from api.exceptions import Unauthorized
 from classes.userdata import UserData
 from config import config
-from logger import logger, clprint, demojize
+from logger import clprint, demojize, logger
+
+if TYPE_CHECKING:
+    from commands import Commands
 
 
 class Command(UserData):
@@ -14,12 +19,12 @@ class Command(UserData):
 
     readyAt: float = 0
     ready: bool = False
-    
+
 
     @property
     def name(self) -> str:
         return self.trigger.replace(" ", "-")
-    
+
 
     @property
     def cost(self) -> int:
@@ -39,14 +44,14 @@ class Command(UserData):
             return False
         if self.ready:
             return True
-        if self.readyAt > time():
-            return False
-        return True
-    
+
+        return self.readyAt < time()
+
 
     @property
     def usePotat(self) -> bool:
-        return (config.usePotat and self.name not in config.oppositePlatform) or (not config.usePotat and self.name in config.oppositePlatform)
+        return ((config.usePotat and self.name not in config.oppositePlatform)
+                or (config.usePotat is False and self.name in config.oppositePlatform))
 
 
 
@@ -56,7 +61,7 @@ class Command(UserData):
         if self.usePotat:
             message = "@potatbotat " + self.trigger
             ok, res = potat.execute(message)
-                
+
         else:
             message = self.channel.prefix + self.trigger
             try:
@@ -66,33 +71,34 @@ class Command(UserData):
                 ok, res = twitch.send(self.channel.channelId, self.uid, message)
 
         return ok, res
-    
-    
-    def execute(self, commands) -> tuple[bool, dict]:
-        return self._execute()
-    
 
-    def handleResult(self, ok: bool, res: dict) -> bool:                    
+
+    def execute(self, commands: Commands) -> tuple[bool, dict]:
+        return self._execute()
+
+
+    def handleResult(self, ok: bool, res: dict) -> bool:
         if not ok:
             logger.error(f"Failed to execute command \"{self.trigger}\": {res=}")
 
             message: str | dict = res.get("text", res.get("error", res.get("message", res)))
-            clprint(f"Failed to execute command \"{self.trigger}\":", demojize(str(message), escape=True), style=[Style.DIM], globalFore=Fore.RED)
+            message = demojize(str(message), escape=True)
+            clprint(f"Failed to execute command \"{self.trigger}\":", message,
+                    style=[Style.DIM], globalFore=Fore.RED)
             return False
 
-        else:
-            logger.debug(f"Executed command: {self.trigger}")
+        logger.debug(f"Executed command: {self.trigger}")
 
-            messages = [f"Executed command \"{self.trigger}\""]
-            if res.get("text"):
-                messages.append(demojize(res["text"], escape=True))
+        messages = [f"Executed command \"{self.trigger}\""]
+        if res.get("text"):
+            messages.append(demojize(res["text"], escape=True))
 
-            clprint(*messages, style=[Style.DIM])
+        clprint(*messages, style=[Style.DIM])
 
-            if self.trigger.startswith("shop"):
-                sleep(6)
-            
-            return True
+        if self.trigger.startswith("shop"):
+            sleep(6)
+
+        return True
 
 
 
@@ -100,7 +106,7 @@ class ShopItem(Command):
     @property
     def cost(self) -> int:
         return self.baseCost * self.rank
-    
+
 
     @property
     def enabled(self) -> bool:

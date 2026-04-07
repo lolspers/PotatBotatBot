@@ -1,11 +1,12 @@
-import os
 import logging
-import colorama
+import os
 from datetime import datetime
-from emoji import emojize as _emojize, demojize as _demojize
+
+import colorama
+from emoji import demojize as _demojize
+from emoji import emojize as _emojize
 
 from config import config
-
 
 killedProgram: bool = False
 
@@ -26,12 +27,12 @@ colorama.init(autoreset=True)
 def demojize(text: str, escape: bool = False) -> str:
     if escape:
         text = ascii(_demojize(text))
-    
+
     return _emojize(text) if config.printEmojis else _demojize(text)
 
 
 
-def tprint(*values, time: bool = True):
+def tprint(*values, time: bool = True) -> None:
     result = []
     for value in values:
         result.append(demojize(value) if isinstance(value, str) else value)
@@ -44,13 +45,21 @@ def tprint(*values, time: bool = True):
         if config.printColor:
             dt = colorama.Style.DIM + dt
 
-        values = (dt,) + values
+        values = (dt, *values)
 
     print(*values)
 
 
 
-def cprint(text, fore: str | None = None, style: str | None = None, back: str | None = None, time: bool = True):
+def cprint(
+        *values,
+        fore: str | None = None,
+        style: str | None = None,
+        back: str | None = None,
+        time: bool = True,
+        ) -> None:
+    text = " ".join([str(value) for value in values])
+
     if config.printColor:
         ansi = ""
 
@@ -63,14 +72,22 @@ def cprint(text, fore: str | None = None, style: str | None = None, back: str | 
         if back:
             ansi += back
 
-        text = ansi + str(text)
-    
-    
+        text = ansi + text
+
     tprint(text, time=time)
 
 
 
-def clprint(*values, fore: list[str | None] | None = None, style: list[str | None] | None = None, back: list[str | None] | None = None, globalFore: str = "", globalStyle: str = "", globalBack: str = "", time: bool = True):
+def clprint(
+        *values,
+        fore: list[str | None] | None = None,
+        style: list[str | None] | None = None,
+        back: list[str | None] | None = None,
+        globalFore: str = "",
+        globalStyle: str = "",
+        globalBack: str = "",
+        time: bool = True,
+        ) -> None:
     if config.printColor:
         values = list(values)
 
@@ -89,7 +106,7 @@ def clprint(*values, fore: list[str | None] | None = None, style: list[str | Non
 
         if globalAnsi:
             values = [globalAnsi + str(value) for value in values]
-    
+
 
     tprint(*values, time=time)
 
@@ -98,7 +115,7 @@ def clprint(*values, fore: list[str | None] | None = None, style: list[str | Non
 def killProgram() -> None:
     global killedProgram
     killedProgram = True
-    
+
     cprint("\nPress enter to exit...", style=colorama.Style.DIM, time=False)
 
     input()

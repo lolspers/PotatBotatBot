@@ -1,11 +1,10 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING
 
-import os
 import json
-
+import os
 from datetime import datetime
 from time import time
+from typing import TYPE_CHECKING
 
 from logger import logger
 
@@ -20,13 +19,21 @@ statsPath = basePath + "prestigeStats.json"
 
 def getPrestigeStats() -> dict[str, dict[str, dict[str, int]]]:
     try:
-        with open(statsPath, "r") as file:
+        with open(statsPath) as file:
             data = file.read()
 
-        return json.loads(data)
-        
+    except FileNotFoundError:
+        logger.info("Prestige: FileNotFoundError, created prestigeStats.json")
 
-    except json.JSONDecodeError as e:
+        with open(statsPath, "w"):
+            pass
+
+        return {}
+
+    try:
+        return json.loads(data)
+
+    except json.JSONDecodeError:
         path = basePath + "decodeError"
 
         if not os.path.isdir(path):
@@ -43,14 +50,7 @@ def getPrestigeStats() -> dict[str, dict[str, dict[str, int]]]:
 
         logger.error(f"Prestige: JSONDecodeError, moved data to '{newPath}'")
 
-
-    except FileNotFoundError as e:
-        logger.info("Prestige: FileNotFoundError, created prestigeStats.json")
-
-        with open(statsPath, "w"):
-            pass
-
-    return {}
+        return {}
 
 
 
@@ -61,45 +61,46 @@ def updatePrestigeStats(user: User) -> dict:
 
     prestigeData = {
         "general": {
-            "prestigedAt": int(time())
+            "prestigedAt": int(time()),
         },
         "potato": {
-            "usage": commands.potato.usage
+            "usage": commands.potato.usage,
         },
         "steal": {
             "usage": commands.steal.usage,
-            "stolenFrom": commands.steal.stolenCount
+            "stolenFrom": commands.steal.stolenCount,
         },
         "trample": {
             "usage": commands.trample.usage,
-            "trampled": commands.trample.trampledCount
+            "trampled": commands.trample.trampledCount,
         },
         "quiz": {
             "attempted": commands.quiz.attempted,
-            "completed": commands.quiz.completed
+            "completed": commands.quiz.completed,
         },
         "gamble": {
             "wins": commands.gamble.wins,
             "losses": commands.gamble.losses,
             "totalWon": commands.gamble.earned,
-            "totalLost": commands.gamble.lost
+            "totalLost": commands.gamble.lost,
         },
         "duel": {
             "wins": commands.duel.wins,
             "losses": commands.duel.losses,
             "totalWon": commands.duel.earned,
             "totalLost": commands.duel.lost,
-            "caughtLosses": commands.duel.caughtLosses
-        }
+            "caughtLosses": commands.duel.caughtLosses,
+        },
     }
 
 
     allStats = getPrestigeStats()
 
     if allStats.get(prestige):
-        logger.warning(f"Prestige: Tried to update prestige stats, but data for prestige {prestige} already exists\n new data: {prestigeData}")
+        logger.warning("Prestige: Tried to update prestige stats, " \
+                       f"but data for prestige {prestige} already exists\nnew data: {prestigeData}")
         return {"error": f"Data for prestige {prestige} already exists"}
-    
+
 
     allStats.update({prestige: prestigeData})
 

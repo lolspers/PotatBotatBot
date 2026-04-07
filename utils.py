@@ -2,7 +2,7 @@ shortUnitToSeconds = {
     "d": 86400,
     "h": 3600,
     "m": 60,
-    "s": 1
+    "s": 1,
 }
 
 
@@ -13,28 +13,28 @@ rankPrices: dict[int, int] = {
     3: 10000,
     4: 25000,
     5: 50000,
-    6: 100000
+    6: 100000,
 }
 
 shopPrices: dict[str, int] = {
     "cdr": 30,
     "fertilizer": 30,
     "guard": 100,
-    "quiz": 125
+    "quiz": 125,
 }
 
 
 def formatSeconds(n: int | float) -> str:
     n = int(n)
     parts = []
-    
+
     for timeUnit, s in shortUnitToSeconds.items():
         if n < 0:
             s = -s
-        
+
         value = n // s
         n %= s
-        
+
         if value != 0:
             parts.append(f"{value}{timeUnit if value != 1 else timeUnit[:-1]}")
 
