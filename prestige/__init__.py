@@ -6,7 +6,7 @@ from datetime import datetime
 from time import time
 from typing import TYPE_CHECKING
 
-from logger import logger
+import globals as g
 
 if TYPE_CHECKING:
     from classes.user import User
@@ -23,7 +23,7 @@ def getPrestigeStats() -> dict[str, dict[str, dict[str, int]]]:
             data = file.read()
 
     except FileNotFoundError:
-        logger.info("Prestige: FileNotFoundError, created prestigeStats.json")
+        g.logger.info("Prestige: FileNotFoundError, created prestigeStats.json")
 
         with open(statsPath, "w"):
             pass
@@ -48,7 +48,7 @@ def getPrestigeStats() -> dict[str, dict[str, dict[str, int]]]:
             file.write(data)
 
 
-        logger.error(f"Prestige: JSONDecodeError, moved data to '{newPath}'")
+        g.logger.error(f"Prestige: JSONDecodeError, moved data to '{newPath}'")
 
         return {}
 
@@ -97,8 +97,9 @@ def updatePrestigeStats(user: User) -> dict:
     allStats = getPrestigeStats()
 
     if allStats.get(prestige):
-        logger.warning("Prestige: Tried to update prestige stats, " \
-                       f"but data for prestige {prestige} already exists\nnew data: {prestigeData}")
+        g.logger.warning("Prestige: Tried to update prestige stats, " \
+                       f"but data for prestige {prestige} already exists\nnew data: {prestigeData}",
+                       extra={"print": False})
         return {"error": f"Data for prestige {prestige} already exists"}
 
 

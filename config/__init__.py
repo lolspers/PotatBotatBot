@@ -1,5 +1,3 @@
 from .config import Config
 
-__all__ = ["config"]
-
-config = Config()
+__all__ = ["Config"]

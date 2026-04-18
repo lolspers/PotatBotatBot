@@ -6,12 +6,10 @@ from typing import TYPE_CHECKING
 
 from colorama import Fore, Style
 
-import logger as loggerModule
+import globals as g
 from api import twitch
-from logger import clprint, cprint, logger
 from prestige import updatePrestigeStats
 
-from . import config
 from .config import defaultFarmingCommands, defaultShopItems
 
 if TYPE_CHECKING:
@@ -19,22 +17,22 @@ if TYPE_CHECKING:
 
 
 def canEnableTwitch() -> bool:
-    if not config.clientSecret or not config.clientId:
+    if not g.config.clientSecret or not g.config.clientId:
         return False
 
-    if config.authCode:
+    if g.config.authCode:
         return True
 
-    return bool(config.twitchToken and config.refreshToken)
+    return bool(g.config.twitchToken and g.config.refreshToken)
 
 
 class Inputs:
     def __init__(self, user: User) -> None:
         self.user: User = user
         self.queue = Queue()
+        self.active: bool = False
         self.thread = Thread(target=self.loop, daemon=True)
         self.thread.start()
-        self.active: bool = False
 
         self.printCommands()
 
@@ -58,12 +56,12 @@ class Inputs:
             "",
             {
                 command: f"{f"{potatCmdMsg} {command}": <{spaceMargin-len(command)+2}} " \
-                            f"(Currently set to {config.farmingCommands[command]})"
+                            f"(Currently set to {g.config.farmingCommands[command]})"
                 for command in list(defaultFarmingCommands.keys())
             },
             {
                 item: f"{f"{potatShopMsg} {item}": <{spaceMargin-len(item)+2}} " \
-                        f"(Currently set to {config.shopItems[item]})"
+                        f"(Currently set to {g.config.shopItems[item]})"
                 for item in list(defaultShopItems.keys())
             },
             "",
@@ -75,75 +73,79 @@ class Inputs:
                 "time": "Toggle printing time",
                 "emoji": "Toggle printing emojis",
             },
-            "Manual changes to config.json require a restart to take effect.",
+            "Manual changes to g.config.json require a restart to take effect.",
             "",
         ]
 
         for line in lines:
             if isinstance(line, str):
-                cprint(line, time=False)
+                print(line)
             elif isinstance(line, dict):
                 for command, description in line.items():
-                    clprint(f"'{command}'", description, style=[None, Style.DIM], time=False)
+                    g.logger.info(f"'{command}': %s{description}",
+                                  Style.DIM,
+                                  extra={"print": True, "write": False, "time": False})
 
 
 
     def loop(self) -> None:
-        logger.debug("Started input loop")
+        g.logger.debug("Started input loop")
         self.active = True
 
         while self.active:
             try:
                 uInput = input().lower()
-                if loggerModule.killedProgram:
-                    break
 
                 self.queue.put(uInput)
 
-                logger.debug(f"Received user input: {uInput}")
+                g.logger.debug(f"Received user input: {uInput}")
 
                 if uInput == "s":
-                    logger.info("Stopped by users request")
+                    g.logger.info("Stopped by users request",
+                                  extra={"print": True})
                     break
 
 
                 if uInput in defaultFarmingCommands:
-                    enable = not config.farmingCommands[uInput]
-                    config.farmingCommands[uInput] = enable
-                    cprint(f"{"Enabled" if enable else "Disabled"} command '{uInput}'",
-                           fore=Fore.CYAN)
+                    enable = not g.config.farmingCommands[uInput]
+                    g.config.farmingCommands[uInput] = enable
+                    g.logger.info(f"{"Enabled" if enable else "Disabled"} command '{uInput}'",
+                                  extra={"color": Fore.CYAN, "print": True})
                     self.user.setCooldowns(shop=False)
 
 
                 elif uInput in defaultShopItems:
-                    enable = not config.shopItems[uInput]
-                    config.shopItems[uInput] = enable
-                    cprint(f"{"Enabled" if enable else "Disabled"} auto buying for '{uInput}'",
-                           fore=Fore.CYAN)
+                    enable = not g.config.shopItems[uInput]
+                    g.config.shopItems[uInput] = enable
+                    g.logger.info(
+                        f"{"Enabled" if enable else "Disabled"} auto buying for '{uInput}'",
+                        extra={"color": Fore.CYAN, "print": True})
                     self.user.setCooldowns()
 
 
                 elif uInput in ["twitch", "twitchapi"]:
                     if not canEnableTwitch():
-                        cprint("Failed to enable twitch api: " \
-                               "one or more credentials in config.json are not set",
-                               fore=Fore.RED)
+                        g.logger.error("Failed to enable twitch api: " \
+                               "one or more credentials in g.config.json are not set",
+                                extra={"color": Fore.CYAN, "print": True})
                         continue
 
-                    if config.authCode:
+                    if g.config.authCode:
                         twitch.generateToken()
 
-                    config.usePotat = False
-                    cprint("Switched to twitch messages", fore=Fore.CYAN)
+                    g.config.usePotat = False
+                    g.logger.info("Switched to twitch messages")
 
 
                 elif uInput in ["potat", "potatapi", "potatbotat"]:
-                    config.usePotat = True
-                    cprint("Switched to potat api", fore=Fore.CYAN)
+                    g.config.usePotat = True
+                    g.logger.info("Switched to potat api",
+                                  extra={"color": Fore.CYAN, "print": True})
 
 
                 elif uInput in ["refresh", "refetch"]:
-                    cprint("Refreshing cooldowns...", fore=Fore.CYAN)
+                    g.logger.info("Refreshing cooldowns...",
+                                  extra={"color": Fore.CYAN, "print": True})
                     self.user.setCooldowns()
 
 
@@ -152,38 +154,42 @@ class Inputs:
                     result = updatePrestigeStats(self.user)
 
                     if result.get("error"):
-                        clprint("Failed to update prestige stats:", result["error"],
-                                style=[Style.BRIGHT], globalFore=Fore.RED)
+                        g.logger.error("Failed to update prestige stats: %s%s",
+                                       Style.NORMAL, result["error"],
+                                       extra={"color": Style.BRIGHT, "print": True})
                     else:
-                        cprint("Updated prestige stats", fore=Fore.GREEN, style=Style.DIM)
+                        g.logger.info("Updated prestige stats",
+                                      extra={"color": Fore.GREEN + Style.DIM, "print": True})
 
 
                 elif uInput == "color":
-                    enable = not config.printColor
-                    config.printColor = enable
-                    cprint(f"{"Enabled" if enable else "Disabled"} printing in color",
-                           fore=Fore.CYAN)
+                    enable = not g.config.printColor
+                    g.config.printColor = enable
+                    g.logger.info(f"{"Enabled" if enable else "Disabled"} printing in color",
+                                  extra={"color": Fore.CYAN, "print": True})
 
 
                 elif uInput == "time":
-                    enable = not config.printTime
-                    config.printTime = enable
-                    cprint(f"{"Enabled" if enable else "Disabled"} printing time", fore=Fore.CYAN)
+                    enable = not g.config.printTime
+                    g.config.printTime = enable
+                    g.logger.info(f"{"Enabled" if enable else "Disabled"} printing time",
+                                  extra={"color": Fore.CYAN, "print": True})
 
 
                 elif uInput in ["emoji", "emojis"]:
-                    enable = not config.printEmojis
-                    config.printEmojis = enable
-                    cprint(f"{"Enabled" if enable else "Disabled"} printing emojis", fore=Fore.CYAN)
+                    enable = not g.config.printEmojis
+                    g.config.printEmojis = enable
+                    g.logger.info(f"{"Enabled" if enable else "Disabled"} printing emojis",
+                                  extra={"color": Fore.CYAN, "print": True})
 
 
                 else:
-                    logger.debug(f"Invalid user command: {uInput}")
-                    cprint(f"Invalid command: '{uInput}'", fore=Fore.YELLOW)
+                    g.logger.info(f"Invalid command: '{uInput}'",
+                                  extra={"color": Fore.YELLOW, "print": True})
                     continue
 
 
-                config.dumpConfig()
+                g.config.dumpConfig()
 
 
             except EOFError:

@@ -1,6 +1,6 @@
 import requests
 
-from logger import logger
+import globals as g
 
 from .exceptions import Unauthorized
 
@@ -20,20 +20,21 @@ class ApiClient:
             json: dict | None = None,
             ) -> tuple[bool, dict]:
         url = self.url + endpoint
-        logger.debug(f"{self.name}: sending {method} request to {url}, {params=}, {json=}")
+        g.logger.debug(f"{self.name}: sending {method} request to {url}, {params=}, {json=}")
 
         response = requests.request(method, url, headers=self.headers, params=params, json=json)
 
         try:
             data: dict = response.json()
-            logger.debug(f"{self.name}: response data: {data}")
+            g.logger.debug(f"{self.name}: response data: {data}")
         except requests.exceptions.JSONDecodeError:
-            logger.warning(f"{self.name}: response does not contain valid JSON: {response.text}")
+            g.logger.warning(f"{self.name}: response does not contain valid JSON: {response.text}",
+                             extra={"print": False})
             return False, {"error": "Response does not contain valid JSON"}
 
         if not response.ok:
-            logger.error(f"{self.name}: response was not OK ({response.status_code}) for {url}: "
-                         + str(data))
+            g.logger.error(f"{self.name}: response was not OK ({response.status_code}) for {url}: ",
+                           extra={"data": data, "print": False})
 
             if response.status_code == 401:
                 raise Unauthorized(f"{self.name}: Invalid token")

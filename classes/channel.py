@@ -1,8 +1,8 @@
 from time import time
 
+import globals as g
 from api import potat, twitch
 from exceptions import StopBot
-from logger import logger
 
 
 class PotatChannel:
@@ -21,14 +21,14 @@ class PotatChannel:
         ok, data = potat.getUser(self.username)
 
         if not ok:
-            logger.critical(f"Failed to get potat channel data: {data=}")
+            g.logger.critical(f"Failed to get potat channel data: {data=}")
             raise Exception("Failed to get potat channel data: " \
                             f"{data.get("error", data)} ({data.get("status")})")
 
         channelData = data.get("channel")
 
         if not channelData or (self.joinRequired and channelData["state"] != "JOINED"):
-            logger.critical(f"PotatBotat is not joined in '{self.username}': {data=}")
+            g.logger.critical(f"PotatBotat is not joined in '{self.username}': {data=}")
             raise StopBot(f"PotatBotat is not joined in '{self.username}'")
 
         self.internalId = data["user"]["user_id"]

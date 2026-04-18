@@ -1,10 +1,9 @@
-from os import _exit
+import sys
 from time import sleep
-from traceback import print_exc
 
 from colorama import Fore, Style
 
-from logger import clprint, cprint, killProgram, logger
+import globals as g
 
 try:
     from classes.user import User
@@ -12,14 +11,30 @@ try:
     from exceptions import StopBot
 
 except Exception as e:
-    logger.critical("Error while importing in main", exc_info=e)
-    clprint(f"{type(e).__name__}:", str(e), style=[Style.DIM], globalFore=Fore.MAGENTA)
-    _exit(1)
+    g.logger.critical("Error while importing in main", exc_info=e)
+    sys.exit(1)
+
+
+inputs: Inputs | None = None
+
+
+def killProgram() -> None:
+    if inputs and inputs.active:
+        inputs.active = False
+
+    g.logger.info("Killed program")
+    g.logger.info("\nPress enter to exit...",
+                  extra={"color": Style.DIM, "print": True, "write": False})
+
+    input()
+    sys.exit(0)
 
 
 def main() -> None:
     try:
-        logger.debug("Started")
+        g.config = g.config
+
+        g.logger.debug("Started")
 
         user = User()
         inputs = Inputs(user)
@@ -27,9 +42,7 @@ def main() -> None:
         user.setCooldowns()
 
     except Exception as e:
-        logger.critical("Error while initializing User/Inputs", exc_info=e)
-        print_exc()
-        clprint("{type(e).__name__}:", str(e), style=[Style.DIM], globalFore=Fore.MAGENTA)
+        g.logger.critical("Error while initializing User/Inputs", exc_info=e)
         return killProgram()
 
 
@@ -45,13 +58,12 @@ def main() -> None:
             user.executeCommands()
 
             if user.executions > 15:
-                logger.warning("Reached execution limit")
                 user.executions = 0
-                cprint("Paused for 3 hours - Too many executions in a short period of time",
-                       fore=Fore.YELLOW)
+                g.logger.warning("Reached execution limit")
+                g.logger.warning(
+                    "Paused for 3 hours - Too many executions in a short period of time")
                 sleep(3600 * 3)
-                cprint("Resumed", fore=Fore.CYAN)
-                logger.info("Continued after execution limit")
+                g.logger.info("Resumed after execution limit", extra={"color": Fore.CYAN})
 
             if user.executions > 0:
                 user.executions -= 0.1
@@ -61,19 +73,17 @@ def main() -> None:
 
 
         except StopBot as e:
-            logger.critical("Stopped bot", exc_info=e)
-            clprint("Stopped bot:", str(e), style=[Style.DIM], globalFore=Fore.MAGENTA)
+            g.logger.critical("Stopped bot:", exc_info=e)
             killProgram()
 
 
         except KeyboardInterrupt:
-            logger.info("KeyboardInterrupt")
-            _exit(0)
+            g.logger.debug("KeyboardInterrupt")
+            sys.exit(0)
 
 
         except Exception as e:
-            logger.error("Exception in main", exc_info=e)
-            clprint("{type(e).__name__}:", str(e), style=[Style.DIM], globalFore=Fore.RED)
+            g.logger.error("Exception in main:", exc_info=e)
             sleep(15)
 
 

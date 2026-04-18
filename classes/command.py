@@ -1,13 +1,12 @@
 from time import sleep, time
 from typing import TYPE_CHECKING
 
-from colorama import Fore, Style
+from colorama import Style
 
+import globals as g
 from api import potat, twitch
 from api.exceptions import Unauthorized
 from classes.userdata import UserData
-from config import config
-from logger import clprint, demojize, logger
 
 if TYPE_CHECKING:
     from commands import Commands
@@ -33,7 +32,7 @@ class Command(UserData):
 
     @property
     def enabled(self) -> bool:
-        return config.farmingCommands[self.trigger]
+        return g.config.farmingCommands[self.trigger]
 
 
     @property
@@ -50,13 +49,13 @@ class Command(UserData):
 
     @property
     def usePotat(self) -> bool:
-        return ((config.usePotat and self.name not in config.oppositePlatform)
-                or (config.usePotat is False and self.name in config.oppositePlatform))
+        return ((g.config.usePotat and self.name not in g.config.oppositePlatform)
+                or (g.config.usePotat is False and self.name in g.config.oppositePlatform))
 
 
 
     def _execute(self) -> tuple[bool, dict]:
-        logger.debug(f"Executing command: {self.trigger}")
+        g.logger.debug(f"Executing command: {self.trigger}")
 
         if self.usePotat:
             message = "@potatbotat " + self.trigger
@@ -79,21 +78,17 @@ class Command(UserData):
 
     def handleResult(self, ok: bool, res: dict) -> bool:
         if not ok:
-            logger.error(f"Failed to execute command \"{self.trigger}\": {res=}")
+            g.logger.error(f"Failed to execute command \"{self.trigger}\": {res=}",
+                           extra={"print": False})
 
             message: str | dict = res.get("text", res.get("error", res.get("message", res)))
-            message = demojize(str(message), escape=True)
-            clprint(f"Failed to execute command \"{self.trigger}\":", message,
-                    style=[Style.DIM], globalFore=Fore.RED)
+            g.logger.error(f"Failed to execute command \"{self.trigger}\": {message}",
+                           extra={"escape": True})
             return False
 
-        logger.debug(f"Executed command: {self.trigger}")
-
-        messages = [f"Executed command \"{self.trigger}\""]
-        if res.get("text"):
-            messages.append(demojize(res["text"], escape=True))
-
-        clprint(*messages, style=[Style.DIM])
+        g.logger.info(f"Executed command \"{self.trigger}\":%s {res.get("text")}",
+                      Style.NORMAL,
+                      extra={"color": Style.DIM, "escape": True})
 
         if self.trigger.startswith("shop"):
             sleep(6)
@@ -110,4 +105,4 @@ class ShopItem(Command):
 
     @property
     def enabled(self) -> bool:
-        return config.shopItems[self.name]
+        return g.config.shopItems[self.name]

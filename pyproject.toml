@@ -6,9 +6,16 @@ fix = true
 
 [tool.ruff.lint]
 select = ["F", "E4", "E7", "E9", "E501", "I", "TID", "ANN001", "ANN201", "UP",
-          "B", "W", "SIM", "RET", "COM812", "RUF"]
+          "B", "W", "SIM", "RET", "COM812", "RUF", "ICN"]
 
 
 [tool.ruff.format]
 quote-style = "double"
 indent-style = "space"
+
+
+[tool.ruff.lint.flake8-import-conventions]
+banned-from = ["globals"]
+
+[tool.ruff.lint.flake8-import-conventions.extend-aliases]
+"globals" = "g"

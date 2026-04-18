@@ -1,123 +1,113 @@
+from __future__ import annotations
+
+import contextlib
 import logging
-import os
+import sys
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 import colorama
-from emoji import demojize as _demojize
-from emoji import emojize as _emojize
+from colorama import Fore, Style
+from emoji import demojize, emojize
 
-from config import config
-
-killedProgram: bool = False
-
-logger = logging.getLogger("logger")
-
-fileHandler = logging.FileHandler("logs.log", encoding="utf-8")
-formatter = logging.Formatter("%(asctime)s [%(levelname)s] %(message)s")
-fileHandler.setFormatter(formatter)
-
-logger.addHandler(fileHandler)
-logger.setLevel(config.loggingLevel)
+if TYPE_CHECKING:
+    from config import Config
 
 
 colorama.init(autoreset=True)
 
+logColors = {
+    logging.DEBUG: Style.DIM,
+    logging.INFO: Fore.WHITE,
+    logging.WARNING: Fore.YELLOW,
+    logging.ERROR: Fore.RED,
+    logging.CRITICAL: Fore.MAGENTA,
+}
 
 
-def demojize(text: str, escape: bool = False) -> str:
-    if escape:
-        text = ascii(_demojize(text))
+class StreamFormatter(logging.Formatter):
+    def __init__(self, config: Config):
+        self.config: Config = config
 
-    return _emojize(text) if config.printEmojis else _demojize(text)
-
-
-
-def tprint(*values, time: bool = True) -> None:
-    result = []
-    for value in values:
-        result.append(demojize(value) if isinstance(value, str) else value)
-
-    values = tuple(result)
-
-    if config.printTime and time:
-        dt = datetime.now().strftime("[%H:%M:%S]")
-
-        if config.printColor:
-            dt = colorama.Style.DIM + dt
-
-        values = (dt, *values)
-
-    print(*values)
+        super().__init__("%(message)s")
 
 
+    def format(self, record: logging.LogRecord) -> str:
+        if self.config:
+            record.msg = str(record.msg)
 
-def cprint(
-        *values,
-        fore: str | None = None,
-        style: str | None = None,
-        back: str | None = None,
-        time: bool = True,
-        ) -> None:
-    text = " ".join([str(value) for value in values])
+            time = ""
+            if self.config.printTime and (getattr(record, "time", None) is not False):
+                time = datetime.now().strftime("[%H:%M:%S] ")
 
-    if config.printColor:
-        ansi = ""
+            if getattr(record, "escape", None):
+                record.msg = ascii(demojize(record.msg))
 
-        if fore:
-            ansi += fore
+            if self.config.printColor:
+                time = Style.DIM + time + Style.NORMAL
+                ansiColor = getattr(record, "color", None)
+                if ansiColor is None:
+                    ansiColor = logColors.get(record.levelno, Fore.WHITE)
 
-        if style:
-            ansi += style
+                record.msg = f"{ansiColor}{record.msg}"
 
-        if back:
-            ansi += back
+            record.msg = f"{time}{record.msg}"
 
-        text = ansi + text
+            record.msg = emojize(record.msg) if self.config.printEmojis else demojize(record.msg)
 
-    tprint(text, time=time)
-
+        return super().format(record)
 
 
-def clprint(
-        *values,
-        fore: list[str | None] | None = None,
-        style: list[str | None] | None = None,
-        back: list[str | None] | None = None,
-        globalFore: str = "",
-        globalStyle: str = "",
-        globalBack: str = "",
-        time: bool = True,
-        ) -> None:
-    if config.printColor:
-        values = list(values)
+class FileFormatter(logging.Formatter):
+    def format(self, record: logging.LogRecord) -> str:
+        formatted = super().format(record)
 
-        for type in [fore, style, back]:
-            if not type:
-                continue
+        data = getattr(record, "data", None)
+        if isinstance(data, (dict, list)):
+            with contextlib.suppress(TypeError):
+                formatted += f"Extra data:\n {data!s}"
 
-            for i in range(len(type)):
-                ansi = type[i]
-
-                if ansi and i < len(values):
-                    values[i] = f"{ansi}{values[i]}"
+        return formatted
 
 
-        globalAnsi = globalFore + globalStyle + globalBack
+class StreamLevelFilter(logging.Filter):
+    def __init__(self, name: str = "", level: int = 30) -> None:
+        self.level: int = level
+        super().__init__(name=name)
 
-        if globalAnsi:
-            values = [globalAnsi + str(value) for value in values]
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        forcePrint = getattr(record, "print", None)
+        if forcePrint is not None:
+            return bool(forcePrint)
+        return record.levelno >= self.level
 
 
-    tprint(*values, time=time)
+class FileFilter(logging.Filter):
+    def filter(self, record: logging.LogRecord) -> bool:
+        forceWrite = getattr(record, "write", None)
+        if forceWrite is not None:
+            return bool(forceWrite)
+        return True
 
 
 
-def killProgram() -> None:
-    global killedProgram
-    killedProgram = True
+def getLogger(config: Config) -> logging.Logger:
+    logger = logging.getLogger(__name__)
 
-    cprint("\nPress enter to exit...", style=colorama.Style.DIM, time=False)
+    fileHandler = logging.FileHandler("logs.log", encoding="utf-8")
+    fileHandler.addFilter(FileFilter())
+    fileHandler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(message)s"))
+    fileHandler.setLevel(config.loggingLevel)
 
-    input()
+    streamHandler = logging.StreamHandler(sys.stdout)
+    streamHandler.addFilter(StreamLevelFilter(level=config.consoleLoggingLevel))
+    streamHandler.setFormatter(StreamFormatter(config))
+    streamHandler.setLevel(logging.DEBUG)
 
-    os._exit(0)
+    logger.addHandler(fileHandler)
+    logger.addHandler(streamHandler)
+
+    logger.setLevel(logging.DEBUG)
+
+    return logger

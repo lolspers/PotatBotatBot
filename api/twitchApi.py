@@ -2,9 +2,8 @@ from time import sleep
 
 import requests
 
-from config import config
+import globals as g
 from exceptions import StopBot
-from logger import logger
 
 from .apiClient import ApiClient
 
@@ -17,8 +16,8 @@ class TwitchApi(ApiClient):
         self.url: str = "https://api.twitch.tv/helix"
         self.headers: dict[str, str] = {
             "Content-Type": "application/json",
-            "Authorization": config.twitchToken,
-            "Client-Id": config.clientId,
+            "Authorization": g.config.twitchToken,
+            "Client-Id": g.config.clientId,
         }
 
 
@@ -38,28 +37,32 @@ class TwitchApi(ApiClient):
             "message": message,
         }
 
-        logger.debug(f"Sending message through twitch api: {json=}")
+        g.logger.debug(f"Sending message through twitch api: {json=}",
+                       extra={"print": False})
         ok, res = self._request("POST", "/chat/messages", json=json)
 
         if not ok:
-            logger.error(f"Failed to send twitch message ({res.get("status", "Unknown status")}): "
-                         + str(res))
+            g.logger.error("Failed to send twitch message " \
+                           f"({res.get("status", "Unknown status")}): {res!s}",
+                           extra={"print": False})
             return False, res
 
         if res["data"][0]["is_sent"] is True:
-            logger.debug(f"Sent twitch message: {res=}")
+            g.logger.debug(f"Sent twitch message: {res=}",
+                         extra={"print": False})
             sleep(1) # twitch no badge ratelimit
             return True, res
 
-        logger.warning(f"Twitch message dropped: {res=}")
+        g.logger.warning(f"Twitch message dropped: {res=}",
+                       extra={"print": False})
         return False, res
 
 
     def generateToken(self) -> None:
         data: dict = {
-            "client_secret": config.clientSecret,
-            "client_id": config.clientId,
-            "code": config.authCode,
+            "client_secret": g.config.clientSecret,
+            "client_id": g.config.clientId,
+            "code": g.config.authCode,
             "redirect_uri": "http://localhost",
             "grant_type": "authorization_code",
         }
@@ -67,22 +70,23 @@ class TwitchApi(ApiClient):
         data = response.json()
 
         if not response.ok:
-            logger.critical(f"Failed to generate twitch token: {data=}")
+            g.logger.critical(f"Failed to generate twitch token: {data=}",
+                              extra={"print": False})
             raise StopBot(f"Failed to generate twitch token: {data.get("message", data)}, " \
                           "please try generating a new code")
 
-        config.twitchToken = data["access_token"]
-        config.refreshToken = data["refresh_token"]
-        config.dumpConfig()
+        g.config.twitchToken = data["access_token"]
+        g.config.refreshToken = data["refresh_token"]
+        g.config.dumpConfig()
 
 
     def refreshAccessToken(self) -> None:
-        logger.info("Refreshing access token")
+        g.logger.debug("Refreshing access token")
         params: dict = {
-            "client_id": config.clientId,
-            "client_secret": config.clientSecret,
+            "client_id": g.config.clientId,
+            "client_secret": g.config.clientSecret,
             "grant_type": "refresh_token",
-            "refresh_token": config.refreshToken,
+            "refresh_token": g.config.refreshToken,
         }
         headers: dict = {
             "Content-Type": "x-www-form-urlencoded",
@@ -94,24 +98,24 @@ class TwitchApi(ApiClient):
 
         data = response.json()
 
-        config.twitchToken = data["access_token"]
-        config.refreshToken = data["refresh_token"]
-        config.authCode = ""
+        g.config.twitchToken = data["access_token"]
+        g.config.refreshToken = data["refresh_token"]
+        g.config.authCode = ""
 
-        self.headers["Authorization"] = f"Bearer {config.twitchToken}"
-        config.dumpConfig()
+        self.headers["Authorization"] = f"Bearer {g.config.twitchToken}"
+        g.config.dumpConfig()
 
 
     def validateToken(self) -> tuple[bool, dict]:
-        logger.debug("Validating twitch token")
+        g.logger.debug("Validating twitch token")
 
         headers: dict = {
-            "Authorization": f"Bearer {config.twitchToken}",
+            "Authorization": f"Bearer {g.config.twitchToken}",
         }
 
         response = requests.get(oauthUrl+"/validate", headers=headers)
         data: dict = response.json()
-        logger.debug(f"TwitchApi: validateToken: {data=} ({response.status_code})")
+        g.logger.debug(f"TwitchApi: validateToken: {data=} ({response.status_code})")
 
         result: dict = {
             "status": response.status_code,
@@ -147,8 +151,8 @@ class TwitchApi(ApiClient):
             raise StopBot("Token is missing the \"user:write:chat\" scope")
 
         self.headers.update({
-            "Client-id": config.clientId,
-            "Authorization": f"Bearer {config.twitchToken}",
+            "Client-id": g.config.clientId,
+            "Authorization": f"Bearer {g.config.twitchToken}",
         })
 
         userId = res["userId"]

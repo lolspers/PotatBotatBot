@@ -25,5 +25,6 @@
         "shop-quiz": false
     },
     "oppositePlatform": [],
-    "loggingLevel": 30
+    "loggingLevel": 30,
+    "consoleLoggingLevel": 20
 }

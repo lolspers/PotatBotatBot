@@ -1,5 +1,4 @@
-from config import config
-from logger import logger
+import globals as g
 
 from .apiClient import ApiClient
 
@@ -11,7 +10,7 @@ class PotatApi(ApiClient):
         self.headers: dict[str, str] = {
             "Content-Type": "application/json",
             "User-Agent": "PotatBotatBot",
-            "Authorization": f"Bearer {config.potatToken}",
+            "Authorization": f"Bearer {g.config.potatToken}",
         }
 
 
@@ -41,7 +40,8 @@ class PotatApi(ApiClient):
                 data["text"] = error
 
             else:
-                logger.warning(f"PotatApi: execute error: {data=}")
+                g.logger.warning(f"PotatApi: execute error: {data=}",
+                                 extra={"print": False})
 
                 if not result.get("text"):
                     result["text"] = error
@@ -57,7 +57,8 @@ class PotatApi(ApiClient):
         data["text"] = data["text"].removesuffix("●").strip()
 
         if data["text"].startswith("\u270b\u23f0") or "ryanpo1Bwuh \u23f0" in data["text"]:
-            logger.warning(f"PotatApi: tried to execute farming command on cooldown: {data=}")
+            g.logger.warning(f"PotatApi: tried to execute farming command on cooldown: {data=}",
+                             extra={"print": False})
             return False, data
 
         return True, data
@@ -67,7 +68,8 @@ class PotatApi(ApiClient):
         ok, res = self.execute("user")
 
         if not ok:
-            logger.critical(f"PotatApi: failed to get self: {res=}")
+            g.logger.critical(f"PotatApi: failed to get self: {res=}",
+                              extra={"print": False})
             raise Exception(f"Failed to get self: {res.get("text", res)}")
 
         parts: list[str] = res["text"].split("●", 2)

@@ -3,14 +3,13 @@ from time import sleep, time
 
 from colorama import Fore, Style
 
+import globals as g
 from api import potat, twitch
 from classes.channel import PotatChannel
 from classes.commands import Commands, Prestige, Quiz, Rankup
 from classes.userdata import UserData
-from config import config
 from config.inputs import canEnableTwitch
 from exceptions import StopBot
-from logger import clprint, cprint, logger
 from prestige import updatePrestigeStats
 from utils import relative, shortUnitToSeconds
 
@@ -21,15 +20,15 @@ with open("quizes.json") as file:
 
 class User(UserData):
     def __init__(self) -> None:
-        UserData.channel = PotatChannel(config.channelId, joinRequired=True)
+        UserData.channel = PotatChannel(g.config.channelId, joinRequired=True)
         UserData.potatUser, UserData.potatUid = potat.getSelf()
 
-        if not config.usePotat or (config.usePotat and config.oppositePlatform):
+        if not g.config.usePotat or (g.config.usePotat and g.config.oppositePlatform):
             if not canEnableTwitch():
                 raise StopBot("Tried to use twitch api, " \
                               "but one or more twitch credentials are not set")
 
-            if config.authCode:
+            if g.config.authCode:
                 twitch.generateToken()
 
             UserData.twitchUser, UserData.twitchUid = twitch.getSelf()
@@ -44,21 +43,21 @@ class User(UserData):
 
 
     def setData(self) -> None:
-        logger.debug("Setting user data")
+        g.logger.debug("Setting user data")
         ok, data = potat.getUser(self.username)
 
         if not ok:
             if data.get("status") == 404:
                 raise StopBot(f"Potat user '{self.username}' not found")
 
-            logger.critical(f"Failed to get user stats: {data=}")
+            g.logger.critical(f"Failed to get user stats: {data=}")
             raise Exception("Failed to get potat user data: " \
                             f"{data.get("error", data)} ({data.get("status")})")
 
         d = data.get("potatoes")
 
         if not d:
-            logger.critical(f"No potato data found for user '{self.username}'")
+            g.logger.critical(f"No potato data found for user '{self.username}'")
             raise StopBot(f"No potato data found for user '{self.username}'")
 
         def getCmdCd(data: dict) -> int:
@@ -104,7 +103,7 @@ class User(UserData):
         self.commands.duel.lost = abs(d["duel"]["totalLosses"])
         self.commands.duel.caughtLosses = d["duel"]["caughtLosses"]
 
-        cprint("Refreshed command cooldowns")
+        g.logger.info("Refreshed command cooldowns")
 
 
 
@@ -138,7 +137,7 @@ class User(UserData):
         self.commands.shopFertilizer.readyAt = cooldowns["shop-fertilizer"]
         self.commands.shopGuard.readyAt = cooldowns["shop-guard"]
 
-        cprint("Refreshed shop cooldowns")
+        g.logger.info("Refreshed shop cooldowns")
 
 
 
@@ -152,8 +151,7 @@ class User(UserData):
             if type(command) in [Rankup, Prestige]:
                 continue
             if command.enabled:
-                cprint(f"{command.name} ready {relative(command.readyAt - time())}",
-                       style=Style.DIM)
+                g.logger.debug(f"{command.name} ready {relative(command.readyAt - time())}")
         print()
 
 
@@ -166,7 +164,7 @@ class User(UserData):
                 if command.canExecute:
                     executedCommand = True
                     self.executions += 1
-                    logger.debug(f"{self.executions=}")
+                    g.logger.debug(f"{self.executions=}")
                     ok, res = command.execute(self.commands)
                     command.handleResult(ok, res)
 
@@ -183,16 +181,14 @@ class User(UserData):
                         res = updatePrestigeStats(self)
 
                         if res.get("error"):
-                            clprint("Failed to update prestige stats:", res["error"],
-                                    style=[Style.DIM], globalFore=Fore.RED)
+                            g.logger.error(f"Failed to update prestige stats:%s {res["error"]}",
+                                           Style.DIM,
+                                           extra={"write": False})
                         else:
-                            cprint("Updated prestige stats", fore=Fore.CYAN)
+                            g.logger.info("Updated prestige stats", extra={"color": Fore.CYAN})
 
             except Exception as e:
-                logger.error(f"Error while executing command \"{command.trigger}\"", exc_info=e)
-                clprint(f"Error while executing \"{command.trigger}\":",
-                        f"{type(e).__name__}: {e!s}",
-                        style=[Style.DIM], globalFore=Fore.RED)
+                g.logger.error(f"Error while executing command \"{command.trigger}\"", exc_info=e)
 
         if executedCommand:
             sleep(5)
@@ -211,9 +207,9 @@ class User(UserData):
             quiz = quiz.split("forgot:", 1)[-1].strip()
 
         elif not ok:
-            logger.error(f"Failed to get quiz: {res}")
-            error = ascii(str(res.get("text", res.get("error", res))))
-            clprint("Failed to get quiz:", error, style=[Style.DIM], globalFore=Fore.RED)
+            errorMsg = ascii(str(res.get("text", res.get("error", res))))
+            g.logger.error(f"Failed to get quiz: {errorMsg}",
+                         extra={"data": res})
             return
 
 
@@ -223,9 +219,7 @@ class User(UserData):
         answer = quizes.get(quiz)
 
         if not answer:
-            logger.warning(f"No answer found for quiz: {quiz=}")
-            clprint("Failed to answer quiz:", f"No answer found for quiz \"{quiz}\"",
-                    style=[Style.DIM], globalFore=Fore.RED)
+            g.logger.warning(f"Failed to answer quiz: No answer found for quiz: {quiz}")
             return
 
         sleep(6)
@@ -236,10 +230,9 @@ class User(UserData):
             ok, res = twitch.send(self.channel.channelId, self.uid, str(answer))
 
         if not ok:
-            logger.error(f"Failed send quiz answer: {res=}")
-            error = ascii(str(res.get("text", res.get("error", res))))
-            clprint(f"Failed to send quiz answer \"{answer}\":", error,
-                    style=[Style.DIM], globalFore=Fore.RED)
+            errorMsg = ascii(str(res.get("text", res.get("error", res))))
+            g.logger.error(f"Failed send quiz answer '{answer}': {errorMsg}",
+                         extra={"data": res})
             return
 
-        clprint("Answered quiz:", str(answer), style=[Style.DIM])
+        g.logger.info(f"Answered quiz: {answer}")

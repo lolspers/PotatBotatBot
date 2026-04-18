@@ -1,6 +1,7 @@
 import json
+import logging
 import re
-from typing import Literal
+from enum import IntEnum
 
 filepath = "config.json"
 defaultFarmingCommands = {
@@ -17,7 +18,13 @@ defaultShopItems = {
     "shop-quiz": False,
 }
 
-type LoggingLevel = Literal[0, 10, 20, 30, 40, 50]
+class LoggingLevel(IntEnum):
+    NOTSET = logging.NOTSET
+    DEBUG = logging.DEBUG
+    INFO = logging.INFO
+    WARNING = logging.WARNING
+    ERROR = logging.ERROR
+    CRITICAL = logging.CRITICAL
 
 
 class Config:
@@ -47,13 +54,19 @@ class Config:
         self.usePotat: bool = bool(data.get("usePotatApi"))
         self.oppositePlatform: list = list(data.get("oppositePlatform", []))
         self.loggingLevel: LoggingLevel = data.get("loggingLevel", 30)
+        self.consoleLoggingLevel: LoggingLevel = data.get("consoleLoggingLevel", 20)
 
 
         if self.channelId and not re.fullmatch(r"\d*", self.channelId):
             raise ValueError("Config: channelId should be a string of numbers")
 
-        if self.loggingLevel not in [0, 10, 20, 30, 40, 50]:
-            self.loggingLevel = 30
+        self.loggingLevel = LoggingLevel(
+            self.loggingLevel if self.loggingLevel in LoggingLevel else 30,
+        )
+
+        self.consoleLoggingLevel = LoggingLevel(
+            self.consoleLoggingLevel if self.consoleLoggingLevel in LoggingLevel else 20,
+        )
 
 
         self.farmingCommands: dict[str, bool] = {}
@@ -106,6 +119,7 @@ class Config:
             "shopItems": self.shopItems,
             "oppositePlatform": self.oppositePlatform,
             "loggingLevel": self.loggingLevel,
+            "consoleLoggingLevel": self.consoleLoggingLevel,
         }
 
         with open(filepath, "w") as file:

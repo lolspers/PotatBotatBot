@@ -1,5 +1,5 @@
+import globals as g
 from classes.channel import PotatChannel
-from config import config
 
 
 class UserData:
@@ -17,8 +17,8 @@ class UserData:
 
     @property
     def username(self) -> str:
-        return self.potatUser if config.usePotat else self.twitchUser
+        return self.potatUser if g.config.usePotat else self.twitchUser
 
     @property
     def uid(self) -> str:
-        return self.potatUid if config.usePotat else self.twitchUid
+        return self.potatUid if g.config.usePotat else self.twitchUid
