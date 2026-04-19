@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from time import sleep, time
 from typing import TYPE_CHECKING
 

@@ -53,7 +53,7 @@ class PotatApi(ApiClient):
                 return False, result
 
         data["text"] = data.get("text", "Response returned no text")
-        data["text"] = data["text"].strip("\u034f").strip("¾").strip()
+        data["text"] = data["text"].replace("\u034f", "").replace("¾", "").strip()
         data["text"] = data["text"].removesuffix("●").strip()
 
         if data["text"].startswith("\u270b\u23f0") or "ryanpo1Bwuh \u23f0" in data["text"]:
