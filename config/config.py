@@ -2,6 +2,7 @@ import json
 import logging
 import re
 from enum import IntEnum
+from urllib.parse import urlparse
 
 filepath = "config.json"
 defaultFarmingCommands = {
@@ -53,12 +54,17 @@ class Config:
         self.printEmojis: bool = bool(data.get("printEmojis"))
         self.usePotat: bool = bool(data.get("usePotatApi"))
         self.oppositePlatform: list = list(data.get("oppositePlatform", []))
+        self.webhook: str = str(data.get("webhook") or "")
         self.loggingLevel: LoggingLevel = data.get("loggingLevel", 30)
         self.consoleLoggingLevel: LoggingLevel = data.get("consoleLoggingLevel", 20)
 
 
         if self.channelId and not re.fullmatch(r"\d*", self.channelId):
             raise ValueError("Config: channelId should be a string of numbers")
+
+        parsedUrl = urlparse(self.webhook)
+        if self.webhook and (not parsedUrl.scheme or not parsedUrl.netloc):
+            raise ValueError("Invalid webhook link provided")
 
         self.loggingLevel = LoggingLevel(
             self.loggingLevel if self.loggingLevel in LoggingLevel else 30,
@@ -118,6 +124,7 @@ class Config:
             "farmingCommands": self.farmingCommands,
             "shopItems": self.shopItems,
             "oppositePlatform": self.oppositePlatform,
+            "webhook": self.webhook,
             "loggingLevel": self.loggingLevel,
             "consoleLoggingLevel": self.consoleLoggingLevel,
         }

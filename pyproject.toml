@@ -19,3 +19,4 @@ banned-from = ["globals"]
 
 [tool.ruff.lint.flake8-import-conventions.extend-aliases]
 "globals" = "g"
+"regex" = "re"

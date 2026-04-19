@@ -36,10 +36,10 @@ def formatSeconds(n: int | float) -> str:
         n %= s
 
         if value != 0:
-            parts.append(f"{value}{timeUnit if value != 1 else timeUnit[:-1]}")
+            parts.append(f"{value}{timeUnit}")
 
 
-    return " and ".join(", ".join(parts).rsplit(", ", 1)) if parts else "0 seconds"
+    return " and ".join(", ".join(parts).rsplit(", ", 1)) if parts else "0s"
 
 
 

@@ -1,7 +1,7 @@
 import logging
 
 import config as configModule
-from logger import getLogger
+import logger as loggerModule
 
 __all__ = [
     "config", "logger",
@@ -9,4 +9,4 @@ __all__ = [
 
 config: configModule.Config = configModule.Config()
 
-logger: logging.Logger = getLogger(config)
+logger: logging.Logger = loggerModule.getLogger(config)

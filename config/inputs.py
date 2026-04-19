@@ -82,8 +82,7 @@ class Inputs:
                 print(line)
             elif isinstance(line, dict):
                 for command, description in line.items():
-                    g.logger.info(f"'{command}': %s{description}",
-                                  Style.DIM,
+                    g.logger.info(f"'{command}':<Style.DIM> {description}",
                                   extra={"print": True, "write": False, "time": False})
 
 
@@ -154,8 +153,8 @@ class Inputs:
                     result = updatePrestigeStats(self.user)
 
                     if result.get("error"):
-                        g.logger.error("Failed to update prestige stats: %s%s",
-                                       Style.NORMAL, result["error"],
+                        g.logger.error("Failed to update prestige stats: <Style.NORMAL>"
+                                       + str(result["error"]),
                                        extra={"color": Style.BRIGHT, "print": True})
                     else:
                         g.logger.info("Updated prestige stats",

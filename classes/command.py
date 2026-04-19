@@ -83,12 +83,15 @@ class Command(UserData):
 
             message: str | dict = res.get("text", res.get("error", res.get("message", res)))
             g.logger.error(f"Failed to execute command \"{self.trigger}\": {message}",
-                           extra={"escape": True})
+                           extra={"escape": True, "webhook": True})
             return False
 
-        g.logger.info(f"Executed command \"{self.trigger}\":%s {res.get("text")}",
-                      Style.NORMAL,
-                      extra={"color": Style.DIM, "escape": True})
+        text = res.get("text", "")
+        if text:
+            text = f": <Style.NORMAL>{text}"
+
+        g.logger.info(f"Executed command \"{self.trigger}\"{text}",
+                      extra={"color": Style.DIM, "escape": True, "webhook": True,})
 
         if self.trigger.startswith("shop"):
             sleep(6)

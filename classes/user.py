@@ -1,7 +1,7 @@
 import json
 from time import sleep, time
 
-from colorama import Fore, Style
+from colorama import Fore
 
 import globals as g
 from api import potat, twitch
@@ -181,14 +181,15 @@ class User(UserData):
                         res = updatePrestigeStats(self)
 
                         if res.get("error"):
-                            g.logger.error(f"Failed to update prestige stats:%s {res["error"]}",
-                                           Style.DIM,
+                            g.logger.error("Failed to update prestige stats: <Style.DIM>"
+                                           + str(res["error"]),
                                            extra={"write": False})
                         else:
                             g.logger.info("Updated prestige stats", extra={"color": Fore.CYAN})
 
             except Exception as e:
-                g.logger.error(f"Error while executing command \"{command.trigger}\"", exc_info=e)
+                g.logger.error(f"Error while executing command \"{command.trigger}\"", exc_info=e,
+                               extra={"webhook": True})
 
         if executedCommand:
             sleep(5)
@@ -235,4 +236,5 @@ class User(UserData):
                          extra={"data": res})
             return
 
-        g.logger.info(f"Answered quiz: {answer}")
+        g.logger.info(f"Answered quiz: {answer}",
+                      extra={"webhook": True})
