@@ -33,6 +33,8 @@ colors = {
     "Style": Style,
 }
 colorPattern = re.compile(r"(<(Style|Fore|Back)\.([A-Z]+)>)")
+dcMdChars = "\\".join("*_~-#[](<>`|")
+dcMdPattern = re.compile(fr"\\[{dcMdChars}](*SKIP)|([{dcMdChars}])")
 
 
 class WebhookHandler(logging.Handler):
@@ -126,6 +128,7 @@ class WebhookFormatter(logging.Formatter):
         msg = super().format(record)
         # discord's ansi sadly isn't fully compatible with colorama
         msg = colorPattern.sub("", msg)
+        msg = dcMdPattern.sub(r"\\\g<1>", msg)
         return msg[:2000]
 
 
