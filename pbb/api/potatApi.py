@@ -1,4 +1,4 @@
-import globals as g
+import pbb.globals as g
 
 from .apiClient import ApiClient
 

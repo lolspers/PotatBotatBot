@@ -121,18 +121,18 @@ Copy the code from the link and in `config.json` set `authCode` to the code you 
 
 ## Usage
 
-To start the bot simply run `main.py`.
+To start the bot simply run the following commands in the project root directory.
 
 #### Windows
 ```bash
 .venv\Scripts\activate
-python main.py
+python -m pbb.main
 ```
 
 #### Linux
 ```bash
 source .venv/bin/activate
-python3 main.py
+python3 -m pbb.main
 ```
 
 Any errors will be logged in `logs.log`.

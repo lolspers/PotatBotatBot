@@ -1,8 +1,8 @@
 from time import time
 
-import globals as g
-from api import potat, twitch
-from exceptions import StopBot
+import pbb.globals as g
+from pbb.api import potat, twitch
+from pbb.exceptions import StopBot
 
 
 class PotatChannel:

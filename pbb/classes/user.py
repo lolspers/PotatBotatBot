@@ -1,19 +1,21 @@
 import json
+import os
 from time import sleep, time
 
 from colorama import Fore
 
-import globals as g
-from api import potat, twitch
-from classes.channel import PotatChannel
-from classes.commands import Commands, Prestige, Quiz, Rankup
-from classes.userdata import UserData
-from config.inputs import canEnableTwitch
-from exceptions import StopBot
-from prestige import updatePrestigeStats
-from utils import relative, shortUnitToSeconds
+import pbb.globals as g
+from pbb.api import potat, twitch
+from pbb.classes.channel import PotatChannel
+from pbb.classes.commands import Commands, Prestige, Quiz, Rankup
+from pbb.classes.userdata import UserData
+from pbb.config.inputs import canEnableTwitch
+from pbb.exceptions import StopBot
+from pbb.prestige import updatePrestigeStats
+from pbb.utils import relative, shortUnitToSeconds
 
-with open("quizes.json") as file:
+quizesPath = os.path.join(g.packageDir, "quizes.json")
+with open(quizesPath) as file:
     quizes: dict[str, str] = json.loads(file.read())
 
 

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from classes.command import Command, ShopItem
-from utils import rankPrices
+from pbb.classes.command import Command, ShopItem
+from pbb.utils import rankPrices
 
 
 class Potato(Command):

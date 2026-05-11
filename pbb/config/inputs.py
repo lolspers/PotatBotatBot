@@ -6,14 +6,14 @@ from typing import TYPE_CHECKING
 
 from colorama import Fore, Style
 
-import globals as g
-from api import twitch
-from prestige import updatePrestigeStats
+import pbb.globals as g
+from pbb.api import twitch
+from pbb.prestige import updatePrestigeStats
 
 from .config import defaultFarmingCommands, defaultShopItems
 
 if TYPE_CHECKING:
-    from classes.user import User
+    from pbb.classes.user import User
 
 
 def canEnableTwitch() -> bool:

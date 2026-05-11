@@ -3,12 +3,12 @@ from time import sleep
 
 from colorama import Fore, Style
 
-import globals as g
+import pbb.globals as g
 
 try:
-    from classes.user import User
-    from config.inputs import Inputs
-    from exceptions import StopBot
+    from pbb.classes.user import User
+    from pbb.config.inputs import Inputs
+    from pbb.exceptions import StopBot
 
 except Exception as e:
     g.logger.critical("Error while importing in main", exc_info=e)
@@ -32,8 +32,6 @@ def killProgram() -> None:
 
 def main() -> None:
     try:
-        g.config = g.config
-
         g.logger.debug("Started")
 
         user = User()

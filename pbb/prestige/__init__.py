@@ -6,15 +6,14 @@ from datetime import datetime
 from time import time
 from typing import TYPE_CHECKING
 
-import globals as g
+import pbb.globals as g
 
 if TYPE_CHECKING:
-    from classes.user import User
+    from pbb.classes.user import User
 
 
-basePath = "prestige/"
-statsPath = basePath + "prestigeStats.json"
-
+basePath = os.path.join(g.packageDir, "prestige")
+statsPath = os.path.join(basePath, "prestigeStats.json")
 
 
 def getPrestigeStats() -> dict[str, dict[str, dict[str, int]]]:
@@ -34,7 +33,7 @@ def getPrestigeStats() -> dict[str, dict[str, dict[str, int]]]:
         return json.loads(data)
 
     except json.JSONDecodeError:
-        path = basePath + "decodeError"
+        path = os.path.join(basePath, "decodeError")
 
         if not os.path.isdir(path):
             os.mkdir(path)
@@ -42,7 +41,7 @@ def getPrestigeStats() -> dict[str, dict[str, dict[str, int]]]:
 
         date = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
-        newPath = path + f"/{date}.txt"
+        newPath = os.path.join(path, f"{date}.txt")
 
         with open(newPath, "w") as file:
             file.write(data)

@@ -1,5 +1,5 @@
-import globals as g
-from classes.channel import PotatChannel
+import pbb.globals as g
+from pbb.classes.channel import PotatChannel
 
 
 class UserData:

@@ -1,10 +1,10 @@
 import json
 import logging
+import os
 import re
 from enum import IntEnum
 from urllib.parse import urlparse
 
-filepath = "config.json"
 defaultFarmingCommands = {
     "potato": True,
     "steal": True,
@@ -29,13 +29,14 @@ class LoggingLevel(IntEnum):
 
 
 class Config:
-    def __init__(self) -> None:
+    def __init__(self, packageDir: str) -> None:
+        self.filepath = os.path.join(packageDir, "..", "config.json")
         self.loadConfig()
 
 
     def loadConfig(self) -> None:
         try:
-            with open(filepath) as file:
+            with open(self.filepath) as file:
                 data: dict = json.load(file)
 
         except FileNotFoundError as e:
@@ -129,5 +130,5 @@ class Config:
             "consoleLoggingLevel": self.consoleLoggingLevel,
         }
 
-        with open(filepath, "w") as file:
+        with open(self.filepath, "w") as file:
             json.dump(data, file, indent=4)

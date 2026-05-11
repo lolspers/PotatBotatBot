@@ -5,10 +5,10 @@ from typing import TYPE_CHECKING
 
 from colorama import Style
 
-import globals as g
-from api import potat, twitch
-from api.exceptions import Unauthorized
-from classes.userdata import UserData
+import pbb.globals as g
+from pbb.api import potat, twitch
+from pbb.api.exceptions import Unauthorized
+from pbb.classes.userdata import UserData
 
 if TYPE_CHECKING:
     from commands import Commands

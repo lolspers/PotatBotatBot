@@ -2,8 +2,8 @@ from time import sleep
 
 import requests
 
-import globals as g
-from exceptions import StopBot
+import pbb.globals as g
+from pbb.exceptions import StopBot
 
 from .apiClient import ApiClient
 

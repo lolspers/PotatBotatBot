@@ -1,6 +1,6 @@
 import requests
 
-import globals as g
+import pbb.globals as g
 
 from .exceptions import Unauthorized
 

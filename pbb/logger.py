@@ -15,7 +15,7 @@ from colorama import Back, Fore, Style
 from emoji import demojize, emojize
 
 if TYPE_CHECKING:
-    from config import Config
+    from pbb.config import Config
 
 
 colorama.init(autoreset=True)
