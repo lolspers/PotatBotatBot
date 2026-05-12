@@ -79,7 +79,7 @@ class Rankup(Command):
 
     @property
     def enabled(self) -> bool:
-        return bool(self.rank < 6)
+        return bool(self.rank < 6) and super().enabled
 
 
 class Prestige(Command):
@@ -93,7 +93,7 @@ class Prestige(Command):
 
     @property
     def enabled(self) -> bool:
-        return bool(self.rank == 6)
+        return bool(self.rank == 6) and super().enabled
 
 
 

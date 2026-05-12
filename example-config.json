@@ -16,7 +16,9 @@
         "steal": true,
         "trample": false,
         "cdr": true,
-        "quiz": false
+        "quiz": false,
+        "rankup": true,
+        "prestige": true
     },
     "shopItems": {
         "shop-fertilizer": true,

@@ -5,14 +5,16 @@ import re
 from enum import IntEnum
 from urllib.parse import urlparse
 
-defaultFarmingCommands = {
+defaultFarmingCommands: dict[str, bool] = {
     "potato": True,
     "steal": True,
     "trample": False,
     "cdr": True,
     "quiz": False,
+    "rankup": True,
+    "prestige": True,
 }
-defaultShopItems = {
+defaultShopItems: dict[str, bool] = {
     "shop-fertilizer": True,
     "shop-guard": True,
     "shop-cdr": True,
@@ -91,6 +93,10 @@ class Config:
 
                 self.farmingCommands[key] = value
 
+            missingCmds = set(defaultFarmingCommands) - set(self.farmingCommands)
+            for cmd in missingCmds:
+                self.farmingCommands[cmd] = defaultFarmingCommands[cmd]
+
 
         self.shopItems: dict[str, bool] = {}
         shopItems = data.get("shopItems")
@@ -106,6 +112,10 @@ class Config:
                     value = defaultShopItems[key]
 
                 self.shopItems[key] = value
+
+            missingItems = set(defaultShopItems) - set(self.shopItems)
+            for item in missingItems:
+                self.shopItems[item] = defaultShopItems[item]
 
 
 
