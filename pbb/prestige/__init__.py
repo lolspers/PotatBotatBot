@@ -12,11 +12,14 @@ if TYPE_CHECKING:
     from pbb.classes.user import User
 
 
-basePath = os.path.join(g.packageDir, "prestige")
+basePath = os.path.join(g.packageDir, "..", "prestige")
 statsPath = os.path.join(basePath, "prestigeStats.json")
 
 
 def getPrestigeStats() -> dict[str, dict[str, dict[str, int]]]:
+    if not os.path.isdir(basePath):
+        os.mkdir(basePath)
+
     try:
         with open(statsPath) as file:
             data = file.read()
@@ -24,8 +27,8 @@ def getPrestigeStats() -> dict[str, dict[str, dict[str, int]]]:
     except FileNotFoundError:
         g.logger.info("Prestige: FileNotFoundError, created prestigeStats.json")
 
-        with open(statsPath, "w"):
-            pass
+        with open(statsPath, "w") as file:
+            file.write("{}")
 
         return {}
 
