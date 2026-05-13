@@ -75,6 +75,7 @@ class PotatApi(ApiClient):
         parts: list[str] = res["text"].split("●", 2)
 
         username = parts[0].strip().removeprefix("@").lower()
+        username = username.split(" ", 1)[0] # remove localized display name if present
         userId = parts[1].split("ID: ", 1)[1].strip()
 
         return username, userId
