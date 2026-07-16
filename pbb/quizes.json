@@ -41,7 +41,11 @@
     "8",
     "A potato recipe calls for 2 pounds of potatoes, 1/2 cup of milk, and 1/4 cup of butter. If you want to make 5 servings, how many pounds of potatoes will you need?": 
     "10",
+    "A potato recipe that makes 2 servings calls for 4 pounds of potatoes, 1/2 cup of milk, and 1/4 cup of butter. If you want to make 5 servings, how many pounds of potatoes will you need?":
+    "10",
     "A potato recipe calls for 3 pounds of potatoes, 1/2 cup of sour cream, and 1/4 cup of chives. If you want to make 4 servings, how many pounds of potatoes will you need?":
+    "12",
+    "A potato recipe that serves 4 calls for 6 pounds of potatoes, 1 cup of sour cream, and 1/2 cup of chives. How many pounds of potatoes do you need to make 8 servings?":
     "12",
     "A chef wants to make a giant potato pancake. A giant pancake requires 2.5x the ingredients of a regular pancake. If her regular recipe makes 4 pancakes and uses 3 potatoes, how many potatoes does she need to make 12 giant pancakes?":
     "22.5",
@@ -126,6 +130,8 @@
     "If a potato is 12 centimeters long and you want to cut it into pieces that are each 4 centimeters long, how many pieces will you have?":
     "3",
     "A potato is 10 centimeters long. If you cut it into pieces that are each 2 centimeters long, how many pieces will you have?":
+    "5",
+    "A potato is 15 centimeters long. If you cut it into pieces that are each 3 centimeters long, how many pieces will you have?":
     "5",
     "A potato is 8 centimeters long. You cut it into pieces that are each 3 cm long. If you add number of sections that are 3cm long, with the total number of sections, what is the result?":
     "5",
