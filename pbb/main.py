@@ -4,6 +4,8 @@ from time import sleep
 from colorama import Fore, Style
 
 import pbb.globals as g
+import pbb.stats as stats
+from pbb.dashboard import startServer, stopServer
 
 try:
     from pbb.classes.user import User
@@ -16,9 +18,13 @@ except Exception as e:
 
 
 inputs: Inputs | None = None
+dashboardServer = None
 
 
 def killProgram() -> None:
+    stopServer(dashboardServer)
+    stats.closeDb()
+
     if inputs and inputs.active:
         inputs.active = False
 
@@ -31,8 +37,14 @@ def killProgram() -> None:
 
 
 def main() -> None:
+    global dashboardServer
+
     try:
         g.logger.debug("Started")
+        stats.initDb()
+        if g.config.webDashboardEnabled:
+            dashboardServer = startServer(g.config.webPort)
+            g.logger.info(f"Dashboard running at http://localhost:{g.config.webPort}")
 
         user = User()
         inputs = Inputs(user)
@@ -77,6 +89,8 @@ def main() -> None:
 
         except KeyboardInterrupt:
             g.logger.debug("KeyboardInterrupt")
+            stopServer(dashboardServer)
+            stats.closeDb()
             sys.exit(0)
 
 

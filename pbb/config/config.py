@@ -58,6 +58,8 @@ class Config:
         self.usePotat: bool = bool(data.get("usePotatApi"))
         self.oppositePlatform: list = list(data.get("oppositePlatform", []))
         self.webhook: str = str(data.get("webhook") or "")
+        self.webDashboardEnabled: bool = bool(data.get("webDashboardEnabled", True))
+        self.webPort: int = int(data.get("webPort", 3000))
         self.loggingLevel: LoggingLevel = data.get("loggingLevel", 30)
         self.consoleLoggingLevel: LoggingLevel = data.get("consoleLoggingLevel", 20)
 
@@ -68,6 +70,8 @@ class Config:
         parsedUrl = urlparse(self.webhook)
         if self.webhook and (not parsedUrl.scheme or not parsedUrl.netloc):
             raise ValueError("Invalid webhook link provided")
+        if not 1 <= self.webPort <= 65_535:
+            raise ValueError("Config: webPort should be between 1 and 65535")
 
         self.loggingLevel = LoggingLevel(
             self.loggingLevel if self.loggingLevel in LoggingLevel else 30,
@@ -136,6 +140,8 @@ class Config:
             "shopItems": self.shopItems,
             "oppositePlatform": self.oppositePlatform,
             "webhook": self.webhook,
+            "webDashboardEnabled": self.webDashboardEnabled,
+            "webPort": self.webPort,
             "loggingLevel": self.loggingLevel,
             "consoleLoggingLevel": self.consoleLoggingLevel,
         }

@@ -5,9 +5,10 @@ from time import sleep, time
 from colorama import Fore
 
 import pbb.globals as g
+import pbb.stats as stats
 from pbb.api import potat, twitch
 from pbb.classes.channel import PotatChannel
-from pbb.classes.commands import Commands, Prestige, Quiz, Rankup
+from pbb.classes.commands import Cdr, Commands, Prestige, Quiz, Rankup
 from pbb.classes.userdata import UserData
 from pbb.config.inputs import canEnableTwitch
 from pbb.exceptions import StopBot
@@ -44,8 +45,10 @@ class User(UserData):
 
 
 
-    def setData(self) -> None:
+    def setData(self, balanceCommand: str = "rank", responseText: str = "") -> None:
         g.logger.debug("Setting user data")
+        hadPlayer = bool(stats.playerInfo["username"])
+        balanceBeforeRefresh = int(stats.playerInfo["potatoes"])
         ok, data = potat.getUser(self.username)
 
         if not ok:
@@ -105,6 +108,13 @@ class User(UserData):
         self.commands.duel.lost = abs(d["duel"]["totalLosses"])
         self.commands.duel.caughtLosses = d["duel"]["caughtLosses"]
 
+        stats.updatePlayer(self)
+        if hadPlayer:
+            stats.recordRefreshedBalanceChange(
+                balanceCommand,
+                balanceBeforeRefresh,
+                responseText,
+            )
         g.logger.info("Refreshed command cooldowns")
 
 
@@ -170,6 +180,15 @@ class User(UserData):
                     ok, res = command.execute(self.commands)
                     command.handleResult(ok, res)
 
+                    if ok and isinstance(command, Cdr) and self.commands.shopCdr.canExecute:
+                        shopok, shopres = self.commands.shopCdr._execute()
+                        self.commands.shopCdr.handleResult(shopok, shopres)
+
+                    if ok and isinstance(command, (Rankup, Prestige)):
+                        responseText = str(
+                            res.get("text", res.get("error", res.get("message", ""))),
+                        )
+                        self.setData(command.trigger, responseText)
 
                     if isinstance(command, Quiz):
                         self.answerQuiz()
@@ -179,7 +198,8 @@ class User(UserData):
 
 
                     elif isinstance(command, Prestige):
-                        self.setData()
+                        if not ok:
+                            self.setData()
                         res = updatePrestigeStats(self)
 
                         if res.get("error"):

@@ -43,18 +43,6 @@ class Cdr(Command):
         self.trigger: str = "cdr"
         self.baseCost: int = 15
 
-    def execute(
-            self,
-            commands: Commands,
-    ) -> tuple[bool, dict]:
-        ok, res = self._execute()
-
-        if ok and commands.shopCdr.canExecute:
-            shopok, shopres = commands.shopCdr._execute()
-            commands.shopCdr.handleResult(shopok, shopres)
-
-        return ok, res
-
     @property
     def cost(self) -> int:
         return int(self.baseCost * self.rank * (1 + self.prestige * 0.1))

@@ -28,6 +28,8 @@
     },
     "oppositePlatform": [],
     "webhook": null,
+    "webDashboardEnabled": true,
+    "webPort": 3300,
     "loggingLevel": 30,
     "consoleLoggingLevel": 20
 }
