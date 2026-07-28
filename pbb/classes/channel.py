@@ -2,6 +2,7 @@ from time import time
 
 import pbb.globals as g
 from pbb.api import potat, twitch
+from pbb.api.exceptions import Unauthorized
 from pbb.exceptions import StopBot
 
 
@@ -63,7 +64,11 @@ class PotatChannel:
         if self._username and self.lastUsernameCheck + 3600*3 > time():
             return self._username
 
-        channel = twitch.getUser(self.channelId).get("login")
+        try:
+            channel = twitch.getUser(self.channelId).get("login")
+        except Unauthorized:
+            twitch.refreshAccessToken()
+            channel = twitch.getUser(self.channelId).get("login")
 
         if not channel:
             raise StopBot(f"Channel with id '{self.channelId}' not found")
