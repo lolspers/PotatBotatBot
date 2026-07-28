@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 from colorama import Style
 
 import pbb.globals as g
+import pbb.stats as stats
 from pbb.api import potat, twitch
 from pbb.api.exceptions import Unauthorized
 from pbb.classes.userdata import UserData
@@ -79,6 +80,11 @@ class Command(UserData):
 
 
     def handleResult(self, ok: bool, res: dict) -> bool:
+        responseText = res.get("text", res.get("error", res.get("message", "")))
+        responseText = str(responseText)
+        stats.setLastCommand(self.trigger)
+        stats.recordCommandResult(self.trigger, responseText, not ok)
+
         if not ok:
             g.logger.error(f"Failed to execute command \"{self.trigger}\": {res=}",
                            extra={"print": False})

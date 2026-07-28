@@ -77,6 +77,8 @@ Copy the code from the link and in `config.json` set `authCode` to the code you 
 | `shopItems` | dict[str, bool] | Shop items set to `true` will be automated. These will only be bought right after or before the command they affect has been executed. | <details> `{ "shop-fertilizer": true, "shop-guard": true, "shop-cdr": true, "shop-quiz": false }` </details> |
 | `oppositePlatform` | list[str] | Commands/Shop items that should be executed on the opposite platform than `usePotatApi` is set to. Possible values: `potato`, `steal`, `trample`, `cdr`, `quiz`, `shop-fertilizer`, `shop-guard`, `shop-cdr`, `shop-quiz` | `[]` |
 | `webhook` | str \| None | A discord webhook link to log command executions to. |  `null` |
+| `webDashboardEnabled` | bool | If true, serves the web dashboard while the bot runs. | `true` |
+| `webPort` | int | Port used by the web dashboard. | `3000` |
 | `loggingLevel` | Literal[0, 10, 20, 30, 40, 50] | The level threshold of the file logger. Allowed values are: `0` (NOTSET), `10` (DEBUG), `20` (INFO), `30` (WARNING), `40` (ERROR), `50` (CRITICAL). | `30` |
 | `consoleLoggingLevel` |  Literal[0, 10, 20, 30, 40, 50] | The level threshold of the console logger. It is recommended to keep this at `20`. | `20` |
 
@@ -116,6 +118,8 @@ Copy the code from the link and in `config.json` set `authCode` to the code you 
     },
     "oppositePlatform": [],
     "webhook": "https://discord.com/api/webhooks/<webhook_id>/<webhook_token>",
+    "webDashboardEnabled": true,
+    "webPort": 3000,
     "loggingLevel": 30,
     "consoleLoggingLevel": 20
 }
@@ -138,6 +142,9 @@ python3 -m pbb.main
 ```
 
 Any errors will be logged in `logs.log`.
+
+The stats dashboard is available at `http://localhost:3000` while the bot is running.
+Stats are stored in `data/stats.sqlite`.
 
 ## Help
 
