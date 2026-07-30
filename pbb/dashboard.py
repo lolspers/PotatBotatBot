@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from threading import Thread
@@ -17,8 +17,8 @@ def _isoDate(value: str | None, fallback: datetime) -> str:
         try:
             date = datetime.fromisoformat(value.replace("Z", "+00:00"))
             if date.tzinfo is None:
-                date = date.replace(tzinfo=timezone.utc)
-            return date.astimezone(timezone.utc).isoformat(timespec="milliseconds").replace(
+                date = date.replace(tzinfo=UTC)
+            return date.astimezone(UTC).isoformat(timespec="milliseconds").replace(
                 "+00:00",
                 "Z",
             )
@@ -54,7 +54,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
             return
 
         if request.path == "/balance-events":
-            now = datetime.now(timezone.utc)
+            now = datetime.now(UTC)
             query = parse_qs(request.query)
             fromDate = _isoDate(query.get("from", [None])[0], now - timedelta(days=1))
             toDate = _isoDate(query.get("to", [None])[0], now)

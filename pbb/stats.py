@@ -3,22 +3,24 @@ from __future__ import annotations
 import os
 import re
 import sqlite3
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
+from enum import StrEnum, auto
 from threading import RLock
 from time import time
 from typing import Any
 
-STAT_KEYS = (
-    "farm",
-    "farmAttempts",
-    "farmSuccesses",
-    "steal",
-    "stealAttempts",
-    "stealSuccesses",
-    "rankups",
-    "prestiges",
-)
-ZERO_STATS = dict.fromkeys(STAT_KEYS, 0)
+
+class StatKeys(StrEnum):
+    farm = auto()
+    farmAttempts = auto()
+    farmSuccesses = auto()
+    steal = auto()
+    stealAttempts = auto()
+    stealSuccesses = auto()
+    rankups = auto()
+    prestiges = auto()
+
+ZERO_STATS = dict.fromkeys(StatKeys, 0)
 RANK_NAMES = (
     "Bankrupt",
     "Backyard Garden",
@@ -58,17 +60,17 @@ _cooldownRegex = re.compile(r"✋⏰|aren'?t ready|not ready", re.IGNORECASE)
 
 
 def _todayStr() -> str:
-    return datetime.now(timezone.utc).date().isoformat()
+    return datetime.now(UTC).date().isoformat()
 
 
 def _weekStartStr() -> str:
-    return (datetime.now(timezone.utc).date() - timedelta(days=6)).isoformat()
+    return (datetime.now(UTC).date() - timedelta(days=6)).isoformat()
 
 
-def _rowStats(row: sqlite3.Row | None) -> dict[str, int]:
+def _rowStats(row: sqlite3.Row | None) -> dict[StatKeys, int]:
     if row is None:
         return ZERO_STATS.copy()
-    return {key: int(row[key]) for key in STAT_KEYS}
+    return {key: int(row[key]) for key in StatKeys}
 
 
 def initDb(path: str | None = None) -> None:
@@ -244,7 +246,7 @@ def _record(values: dict[str, int]) -> None:
                 ).fetchone(),
             )
 
-        for key in STAT_KEYS:
+        for key in StatKeys:
             cache["totals"][key] += values[key]
             cache["today"][key] += values[key]
             sessionTotals[key] += values[key]
@@ -262,7 +264,7 @@ def _recordBalanceChange(
     if _db is None:
         raise RuntimeError("Stats database is not initialized")
 
-    executedAt = datetime.now(timezone.utc).isoformat(timespec="milliseconds")
+    executedAt = datetime.now(UTC).isoformat(timespec="milliseconds")
     executedAt = executedAt.replace("+00:00", "Z")
     with _lock:
         _db.execute(
