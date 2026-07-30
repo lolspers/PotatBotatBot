@@ -86,10 +86,10 @@ class Command(UserData):
         stats.recordCommandResult(self.trigger, responseText, not ok)
 
         if not ok:
-            g.logger.error(f"Failed to execute command \"{self.trigger}\": {res=}",
-                           extra={"print": False})
+            g.logger.error(f"Failed to execute command \"{self.trigger}\"",
+                           extra={"print": False, "data": res})
 
-            message: str | dict = res.get("text", res.get("error", res.get("message", res)))
+            message: str | dict = res.get("text", res.get("message", res))
             g.logger.error(f"Failed to execute command \"{self.trigger}\": {message}",
                            extra={"escape": True, "webhook": True})
             return False

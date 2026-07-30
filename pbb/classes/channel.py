@@ -22,14 +22,15 @@ class PotatChannel:
         ok, data = potat.getUser(self.username)
 
         if not ok:
-            g.logger.critical(f"Failed to get potat channel data: {data=}")
+            g.logger.critical("Failed to get potat channel data", extra={"data": data})
             raise Exception("Failed to get potat channel data: " \
                             f"{data.get("error", data)} ({data.get("status")})")
 
         channelData = data.get("channel")
 
         if not channelData or (self.joinRequired and channelData["state"] != "JOINED"):
-            g.logger.critical(f"PotatBotat is not joined in '{self.username}': {data=}")
+            g.logger.critical(f"PotatBotat is not joined in '{self.username}'",
+                              extra={"data": data})
             raise StopBot(f"PotatBotat is not joined in '{self.username}'")
 
         self.internalId = data["user"]["user_id"]

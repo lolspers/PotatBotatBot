@@ -37,24 +37,23 @@ class TwitchApi(ApiClient):
             "message": message,
         }
 
-        g.logger.debug(f"Sending message through twitch api: {json=}",
-                       extra={"print": False})
+        g.logger.debug("Sending message through twitch api",
+                       extra={"print": False, "data": json})
         ok, res = self._request("POST", "/chat/messages", json=json)
 
         if not ok:
-            g.logger.error("Failed to send twitch message " \
-                           f"({res.get("status", "Unknown status")}): {res!s}",
-                           extra={"print": False})
+            g.logger.error(f"Failed to send twitch message ({res.get("status", "Unknown status")})",
+                           extra={"print": False, "data": res})
             return False, res
 
         if res["data"][0]["is_sent"] is True:
-            g.logger.debug(f"Sent twitch message: {res=}",
-                         extra={"print": False})
+            g.logger.debug("Sent twitch message",
+                         extra={"print": False, "data": res})
             sleep(1) # twitch no badge ratelimit
             return True, res
 
-        g.logger.warning(f"Twitch message dropped: {res=}",
-                       extra={"print": False})
+        g.logger.warning("Twitch message dropped",
+                       extra={"print": False, "data": res})
         return False, res
 
 
@@ -70,8 +69,8 @@ class TwitchApi(ApiClient):
         data = response.json()
 
         if not response.ok:
-            g.logger.critical(f"Failed to generate twitch token: {data=}",
-                              extra={"print": False})
+            g.logger.critical("Failed to generate twitch token",
+                              extra={"print": False, "data": data})
             raise StopBot(f"Failed to generate twitch token: {data.get("message", data)}, " \
                           "please try generating a new code")
 
@@ -115,7 +114,8 @@ class TwitchApi(ApiClient):
 
         response = requests.get(oauthUrl+"/validate", headers=headers)
         data: dict = response.json()
-        g.logger.debug(f"TwitchApi: validateToken: {data=} ({response.status_code})")
+        g.logger.debug(f"TwitchApi: validateToken ({response.status_code})",
+                       extra={"data": data})
 
         result: dict = {
             "status": response.status_code,

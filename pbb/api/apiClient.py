@@ -20,13 +20,14 @@ class ApiClient:
             json: dict | None = None,
             ) -> tuple[bool, dict]:
         url = self.url + endpoint
-        g.logger.debug(f"{self.name}: sending {method} request to {url}, {params=}, {json=}")
+        g.logger.debug(f"{self.name}: sending {method} request to {url}",
+                       extra={"data": {"params": params, "json": json}})
 
         response = requests.request(method, url, headers=self.headers, params=params, json=json)
 
         try:
             data: dict = response.json()
-            g.logger.debug(f"{self.name}: response data: {data}")
+            g.logger.debug(f"{self.name}: response data", extra={"data": data})
         except requests.exceptions.JSONDecodeError:
             g.logger.warning(f"{self.name}: response does not contain valid JSON: {response.text}",
                              extra={"print": False})

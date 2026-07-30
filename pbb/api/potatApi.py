@@ -31,7 +31,6 @@ class PotatApi(ApiClient):
             return False, res
 
         data: dict[str, str] = res["data"]
-        result: dict = {}
 
         error: str = data.get("error", "")
         if error:
@@ -40,25 +39,24 @@ class PotatApi(ApiClient):
                 data["text"] = error
 
             else:
-                g.logger.warning(f"PotatApi: execute error: {data=}",
-                                 extra={"print": False})
+                g.logger.warning("PotatApi: execute error",
+                                 extra={"print": False, "data": data})
 
-                if not result.get("text"):
-                    result["text"] = error
+                data.setdefault("text", error)
 
                 if error.endswith("on cooldown.") and cooldownRetries > 0:
                     cooldownRetries -= 1
                     return self.execute(message, cooldownRetries=cooldownRetries)
 
-                return False, result
+                return False, data
 
         data["text"] = data.get("text", "Response returned no text")
         data["text"] = data["text"].replace("\u034f", "").replace("¾", "").strip()
         data["text"] = data["text"].removesuffix("●").strip()
 
         if data["text"].startswith("\u270b\u23f0") or "ryanpo1Bwuh \u23f0" in data["text"]:
-            g.logger.warning(f"PotatApi: tried to execute farming command on cooldown: {data=}",
-                             extra={"print": False})
+            g.logger.warning("PotatApi: tried to execute farming command on cooldown",
+                             extra={"print": False, "data": data})
             return False, data
 
         return True, data
@@ -68,8 +66,8 @@ class PotatApi(ApiClient):
         ok, res = self.execute("user")
 
         if not ok:
-            g.logger.critical(f"PotatApi: failed to get self: {res=}",
-                              extra={"print": False})
+            g.logger.critical("PotatApi: failed to get self",
+                              extra={"print": False, "data": res})
             raise Exception(f"Failed to get self: {res.get("text", res)}")
 
         parts: list[str] = res["text"].split("●", 2)

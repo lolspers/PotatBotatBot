@@ -55,7 +55,7 @@ class User(UserData):
             if data.get("status") == 404:
                 raise StopBot(f"Potat user '{self.username}' not found")
 
-            g.logger.critical(f"Failed to get user stats: {data=}")
+            g.logger.critical("Failed to get user stats", extra={"data": data})
             raise Exception("Failed to get potat user data: " \
                             f"{data.get("error", data)} ({data.get("status")})")
 
@@ -124,7 +124,7 @@ class User(UserData):
 
         if not ok:
             raise Exception("Failed to get shop cooldowns: "
-                            + res.get("text", res.get("error", res)))
+                            + res.get("text", res))
 
         message: str = res["text"].lower().strip()
         parts: list[str] = message.rsplit(" ● ", 4)[1:]
@@ -230,7 +230,7 @@ class User(UserData):
             quiz = quiz.split("forgot:", 1)[-1].strip()
 
         elif not ok:
-            errorMsg = ascii(str(res.get("text", res.get("error", res))))
+            errorMsg = ascii(str(res.get("text", res)))
             g.logger.error(f"Failed to get quiz: {errorMsg}",
                          extra={"data": res})
             return

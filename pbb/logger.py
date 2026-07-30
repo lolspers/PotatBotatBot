@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import contextlib
+import json
 import logging
 import queue
 import sys
@@ -110,9 +111,12 @@ class FileFormatter(logging.Formatter):
         formatted = super().format(record)
 
         data = getattr(record, "data", None)
-        if isinstance(data, (dict, list)):
-            with contextlib.suppress(TypeError):
-                formatted += f"Extra data:\n {data!s}"
+        if data is not None:
+            if isinstance(data, (dict, list)):
+                with contextlib.suppress(TypeError):
+                    data = json.dumps(data)
+
+            formatted += f"\nExtra data: {data}"
 
         return formatted
 
