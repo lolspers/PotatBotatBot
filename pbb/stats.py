@@ -4,21 +4,21 @@ import os
 import re
 import sqlite3
 from datetime import UTC, datetime, timedelta
-from enum import StrEnum, auto
+from enum import StrEnum
 from threading import RLock
 from time import time
 from typing import Any
 
 
 class StatKeys(StrEnum):
-    farm = auto()
-    farmAttempts = auto()
-    farmSuccesses = auto()
-    steal = auto()
-    stealAttempts = auto()
-    stealSuccesses = auto()
-    rankups = auto()
-    prestiges = auto()
+    farm = "farm"
+    farmAttempts = "farmAttempts"
+    farmSuccesses = "farmSuccesses"
+    steal = "steal"
+    stealAttempts = "stealAttempts"
+    stealSuccesses = "stealSuccesses"
+    rankups = "rankups"
+    prestiges = "prestiges"
 
 ZERO_STATS = dict.fromkeys(StatKeys, 0)
 RANK_NAMES = (
