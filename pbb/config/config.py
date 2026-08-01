@@ -10,6 +10,7 @@ defaultFarmingCommands: dict[str, bool] = {
     "steal": True,
     "trample": False,
     "cdr": True,
+    "eat": False,
     "quiz": False,
     "rankup": True,
     "prestige": True,

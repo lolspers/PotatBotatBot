@@ -55,6 +55,15 @@ class Quiz(Command):
         self.completed: int = 0
 
 
+class Eat(Command):
+    def __init__(self) -> None:
+        self.trigger: str = "eat"
+
+    @property
+    def cost(self) -> int:
+        return 5
+
+
 
 class Rankup(Command):
     def __init__(self) -> None:
@@ -136,6 +145,7 @@ class Commands:
         self.trample: Trample = Trample()
         self.cdr: Cdr = Cdr()
         self.quiz: Quiz = Quiz()
+        self.eat: Eat = Eat()
         self.rankup: Rankup = Rankup()
         self.prestige: Prestige = Prestige()
 
@@ -153,6 +163,7 @@ class Commands:
             self.trample,
             self.cdr,
             self.quiz,
+            self.eat,
             self.rankup,
             self.prestige,
         ]

@@ -97,6 +97,9 @@ class User(UserData):
         self.commands.quiz.attempted = d["quiz"]["attempted"]
         self.commands.quiz.completed = d["quiz"]["completed"]
 
+        self.commands.eat.readyAt = getCmdCd(d["eat"])
+        self.commands.eat.ready = d["eat"]["ready"]
+
         self.commands.gamble.wins = d["gamble"]["winCount"]
         self.commands.gamble.lost = d["gamble"]["loseCount"]
         self.commands.gamble.earned = d["gamble"]["totalWins"]

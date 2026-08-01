@@ -16,6 +16,7 @@
         "steal": true,
         "trample": false,
         "cdr": true,
+        "eat": false,
         "quiz": false,
         "rankup": true,
         "prestige": true
