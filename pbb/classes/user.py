@@ -229,8 +229,10 @@ class User(UserData):
 
         quiz: str = res.get("text", "")
 
+        firstExecution: bool = True
         if "forgot:" in quiz:
             quiz = quiz.split("forgot:", 1)[-1].strip()
+            firstExecution = False
 
         elif not ok:
             errorMsg = ascii(str(res.get("text", res)))
@@ -250,7 +252,7 @@ class User(UserData):
 
         sleep(6)
 
-        if self.commands.quiz.usePotat:
+        if self.commands.quiz.usePotat or firstExecution:
             ok, res = potat.execute(f"a {answer}")
         else:
             ok, res = twitch.send(self.channel.channelId, self.uid, str(answer))
