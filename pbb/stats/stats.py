@@ -9,6 +9,8 @@ from threading import RLock
 from time import time
 from typing import Any
 
+from .migrator import Migrator
+
 
 class StatKeys(StrEnum):
     farm = "farm"
@@ -19,6 +21,10 @@ class StatKeys(StrEnum):
     stealSuccesses = "stealSuccesses"
     rankups = "rankups"
     prestiges = "prestiges"
+    quizReward = "quizReward"
+    quizAttempts = "quizAttempts"
+    quizSuccesses = "quizSuccesses"
+    quizFailures = "quizFailures"
 
 ZERO_STATS = dict.fromkeys(StatKeys, 0)
 RANK_NAMES = (
@@ -45,6 +51,8 @@ playerInfo = {
     "harvests": 0,
     "steals": 0,
     "stolenFrom": 0,
+    "quizzes": 0,
+    "quizzesCompleted": 0,
     "farmSize": "",
     "rank": 1,
     "leaderboardRank": 0,
@@ -77,52 +85,64 @@ def initDb(path: str | None = None) -> None:
     global _db, _lastRecordDate
 
     if path is None:
-        path = os.path.join(os.path.dirname(__file__), "..", "data", "stats.sqlite")
+        path = os.path.join(os.path.dirname(__file__), "..", "..", "data", "stats.sqlite")
 
     os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
     _db = sqlite3.connect(path, check_same_thread=False)
     _db.row_factory = sqlite3.Row
     _db.execute("PRAGMA journal_mode = WAL")
+
+    migrator = Migrator(_db)
+    migrator.migrate()
+
     _db.executescript(
         """
         CREATE TABLE IF NOT EXISTS totals (
-          id               INTEGER PRIMARY KEY CHECK (id = 1),
-          farm             INTEGER NOT NULL DEFAULT 0,
-          farmAttempts     INTEGER NOT NULL DEFAULT 0,
-          farmSuccesses    INTEGER NOT NULL DEFAULT 0,
-          steal            INTEGER NOT NULL DEFAULT 0,
-          stealAttempts    INTEGER NOT NULL DEFAULT 0,
-          stealSuccesses   INTEGER NOT NULL DEFAULT 0,
-          rankups          INTEGER NOT NULL DEFAULT 0,
-          prestiges        INTEGER NOT NULL DEFAULT 0
+            id                   INTEGER PRIMARY KEY CHECK (id = 1),
+            farm                 INTEGER NOT NULL DEFAULT 0,
+            farmAttempts         INTEGER NOT NULL DEFAULT 0,
+            farmSuccesses        INTEGER NOT NULL DEFAULT 0,
+            steal                INTEGER NOT NULL DEFAULT 0,
+            stealAttempts        INTEGER NOT NULL DEFAULT 0,
+            stealSuccesses       INTEGER NOT NULL DEFAULT 0,
+            rankups              INTEGER NOT NULL DEFAULT 0,
+            prestiges            INTEGER NOT NULL DEFAULT 0,
+            quizReward           INTEGER NOT NULL DEFAULT 0,
+            quizAttempts         INTEGER NOT NULL DEFAULT 0,
+            quizSuccesses        INTEGER NOT NULL DEFAULT 0,
+            quizFailures         INTEGER NOT NULL DEFAULT 0
         );
         INSERT OR IGNORE INTO totals (id) VALUES (1);
 
         CREATE TABLE IF NOT EXISTS daily (
-          date             TEXT    NOT NULL PRIMARY KEY,
-          farm             INTEGER NOT NULL DEFAULT 0,
-          farmAttempts     INTEGER NOT NULL DEFAULT 0,
-          farmSuccesses    INTEGER NOT NULL DEFAULT 0,
-          steal            INTEGER NOT NULL DEFAULT 0,
-          stealAttempts    INTEGER NOT NULL DEFAULT 0,
-          stealSuccesses   INTEGER NOT NULL DEFAULT 0,
-          rankups          INTEGER NOT NULL DEFAULT 0,
-          prestiges        INTEGER NOT NULL DEFAULT 0
+            date                 TEXT PRIMARY KEY,
+            farm                 INTEGER NOT NULL DEFAULT 0,
+            farmAttempts         INTEGER NOT NULL DEFAULT 0,
+            farmSuccesses        INTEGER NOT NULL DEFAULT 0,
+            steal                INTEGER NOT NULL DEFAULT 0,
+            stealAttempts        INTEGER NOT NULL DEFAULT 0,
+            stealSuccesses       INTEGER NOT NULL DEFAULT 0,
+            rankups              INTEGER NOT NULL DEFAULT 0,
+            prestiges            INTEGER NOT NULL DEFAULT 0,
+            quizReward           INTEGER NOT NULL DEFAULT 0,
+            quizAttempts         INTEGER NOT NULL DEFAULT 0,
+            quizSuccesses        INTEGER NOT NULL DEFAULT 0,
+            quizFailures         INTEGER NOT NULL DEFAULT 0
         );
 
-        CREATE TABLE IF NOT EXISTS balance_events (
-          id               INTEGER PRIMARY KEY AUTOINCREMENT,
-          executedAt       TEXT    NOT NULL,
-          command          TEXT    NOT NULL,
-          category         TEXT    NOT NULL,
-          delta            INTEGER NOT NULL,
-          balanceAfter     INTEGER NOT NULL,
-          responseText     TEXT    NOT NULL DEFAULT ''
+        CREATE TABLE IF NOT EXISTS events (
+            id           INTEGER PRIMARY KEY AUTOINCREMENT,
+            executedAt   TEXT NOT NULL,
+            command      TEXT NOT NULL,
+            category     TEXT NOT NULL,
+            delta        INTEGER NOT NULL,
+            balanceAfter INTEGER NOT NULL,
+            responseText TEXT NOT NULL DEFAULT ''
         );
-        CREATE INDEX IF NOT EXISTS idx_balance_events_executedAt
-          ON balance_events (executedAt);
-        CREATE INDEX IF NOT EXISTS idx_balance_events_category_executedAt
-          ON balance_events (category, executedAt);
+        CREATE INDEX IF NOT EXISTS idx_events_executedAt
+            ON events (executedAt);
+        CREATE INDEX IF NOT EXISTS idx_events_category_executedAt
+            ON events (category, executedAt);
         """,
     )
 
@@ -130,7 +150,8 @@ def initDb(path: str | None = None) -> None:
         _db.execute(
             """
             SELECT farm, farmAttempts, farmSuccesses, steal, stealAttempts,
-                   stealSuccesses, rankups, prestiges
+                   stealSuccesses, rankups, prestiges, quizReward, quizAttempts,
+                   quizSuccesses, quizFailures
             FROM totals WHERE id = 1
             """,
         ).fetchone(),
@@ -139,7 +160,8 @@ def initDb(path: str | None = None) -> None:
         _db.execute(
             """
             SELECT farm, farmAttempts, farmSuccesses, steal, stealAttempts,
-                   stealSuccesses, rankups, prestiges
+                   stealSuccesses, rankups, prestiges, quizReward, quizAttempts,
+                   quizSuccesses, quizFailures
             FROM daily WHERE date = ?
             """,
             (_todayStr(),),
@@ -156,7 +178,11 @@ def initDb(path: str | None = None) -> None:
               COALESCE(SUM(stealAttempts), 0) AS stealAttempts,
               COALESCE(SUM(stealSuccesses), 0) AS stealSuccesses,
               COALESCE(SUM(rankups), 0) AS rankups,
-              COALESCE(SUM(prestiges), 0) AS prestiges
+              COALESCE(SUM(prestiges), 0) AS prestiges,
+              COALESCE(SUM(quizReward), 0) AS quizReward,
+              COALESCE(SUM(quizAttempts), 0) AS quizAttempts,
+              COALESCE(SUM(quizSuccesses), 0) AS quizSuccesses,
+              COALESCE(SUM(quizFailures), 0) AS quizFailures
             FROM daily WHERE date >= ?
             """,
             (_weekStartStr(),),
@@ -195,7 +221,11 @@ def _record(values: dict[str, int]) -> None:
               stealAttempts = stealAttempts + :stealAttempts,
               stealSuccesses = stealSuccesses + :stealSuccesses,
               rankups = rankups + :rankups,
-              prestiges = prestiges + :prestiges
+              prestiges = prestiges + :prestiges,
+              quizReward = quizReward + :quizReward,
+              quizAttempts = quizAttempts + :quizAttempts,
+              quizSuccesses = quizSuccesses + :quizSuccesses,
+              quizFailures = quizFailures + :quizFailures
             WHERE id = 1
             """,
             values,
@@ -204,11 +234,13 @@ def _record(values: dict[str, int]) -> None:
             """
             INSERT INTO daily (
               date, farm, farmAttempts, farmSuccesses, steal, stealAttempts,
-              stealSuccesses, rankups, prestiges
+              stealSuccesses, rankups, prestiges, quizReward, quizAttempts,
+              quizSuccesses, quizFailures
             )
             VALUES (
               :date, :farm, :farmAttempts, :farmSuccesses, :steal, :stealAttempts,
-              :stealSuccesses, :rankups, :prestiges
+              :stealSuccesses, :rankups, :prestiges, :quizReward, :quizAttempts,
+              :quizSuccesses, :quizFailures
             )
             ON CONFLICT(date) DO UPDATE SET
               farm = farm + excluded.farm,
@@ -218,7 +250,11 @@ def _record(values: dict[str, int]) -> None:
               stealAttempts = stealAttempts + excluded.stealAttempts,
               stealSuccesses = stealSuccesses + excluded.stealSuccesses,
               rankups = rankups + excluded.rankups,
-              prestiges = prestiges + excluded.prestiges
+              prestiges = prestiges + excluded.prestiges,
+              quizReward = quizReward + excluded.quizReward,
+              quizAttempts = quizAttempts + excluded.quizAttempts,
+              quizSuccesses = quizSuccesses + excluded.quizSuccesses,
+              quizFailures = quizFailures + excluded.quizFailures
             """,
             params,
         )
@@ -269,7 +305,7 @@ def _recordBalanceChange(
     with _lock:
         _db.execute(
             """
-            INSERT INTO balance_events (
+            INSERT INTO events (
               executedAt, command, category, delta, balanceAfter, responseText
             )
             VALUES (?, ?, ?, ?, ?, ?)
@@ -279,7 +315,7 @@ def _recordBalanceChange(
         _db.commit()
 
 
-def getBalanceEvents(fromDate: str, toDate: str) -> list[dict]:
+def getEvents(fromDate: str, toDate: str) -> list[dict]:
     if _db is None:
         raise RuntimeError("Stats database is not initialized")
 
@@ -287,13 +323,29 @@ def getBalanceEvents(fromDate: str, toDate: str) -> list[dict]:
         rows = _db.execute(
             """
             SELECT id, executedAt, command, category, delta, balanceAfter, responseText
-            FROM balance_events
+            FROM events
             WHERE executedAt >= ? AND executedAt <= ?
             ORDER BY executedAt ASC, id ASC
             """,
             (fromDate, toDate),
         ).fetchall()
     return [dict(row) for row in rows]
+
+
+def getEvent(id: int) -> dict | None:
+    if _db is None:
+        raise RuntimeError("Stats database is not initialized")
+
+    with _lock:
+        row = _db.execute(
+            """
+            SELECT id, executedAt, command, category, delta, balanceAfter, responseText
+            FROM events
+            WHERE id = ?
+            """,
+            (id,),
+        ).fetchone()
+    return dict(row) if row else None
 
 
 def updatePlayer(user: Any) -> None:
@@ -307,6 +359,8 @@ def updatePlayer(user: Any) -> None:
                 "harvests": int(user.commands.potato.usage),
                 "steals": int(user.commands.steal.usage),
                 "stolenFrom": int(user.commands.steal.stolenCount),
+                "quizzes": int(user.commands.quiz.attempted),
+                "quizzesCompleted": int(user.commands.quiz.completed),
                 "farmSize": RANK_NAMES[rank],
                 "rank": rank,
             },
@@ -342,7 +396,9 @@ def _balanceCategory(command: str) -> str:
     if command == "rank":
         return "refresh"
     if command == "cdr" or "cooldown" in normalized or command.startswith("shop "):
-        return "shop_cdr"
+        return "spending"
+    if command == "quiz":
+        return "quiz"
     return "other"
 
 
@@ -363,8 +419,14 @@ def _parseDelta(command: str, responseText: str, isError: bool) -> int:
     return 0
 
 
-def recordCommandResult(command: str, responseText: str, isError: bool) -> None:
-    balanceChange = _parseBalanceChange(responseText)
+def recordCommandResult(
+    command: str,
+    responseText: str,
+    isError: bool,
+    balanceChange: tuple[int, int] | None = None,
+) -> None:
+    if not balanceChange:
+        balanceChange = _parseBalanceChange(responseText)
     if balanceChange is not None:
         delta, balanceAfter = balanceChange
         with _lock:
@@ -381,7 +443,7 @@ def recordCommandResult(command: str, responseText: str, isError: bool) -> None:
         return
     if command == "potato" and "♻⏰" in responseText:
         return
-    if command not in {"potato", "steal", "rankup", "prestige"}:
+    if command not in {"potato", "steal", "rankup", "prestige", "quiz"}:
         return
 
     delta = balanceChange[0] if balanceChange is not None else _parseDelta(
@@ -398,6 +460,10 @@ def recordCommandResult(command: str, responseText: str, isError: bool) -> None:
         "stealSuccesses": 1 if command == "steal" and delta > 0 else 0,
         "rankups": 1 if command == "rankup" and not isError else 0,
         "prestiges": 1 if command == "prestige" and not isError else 0,
+        "quizReward": delta if command == "quiz" and delta > 0 else 0,
+        "quizAttempts": 1 if command == "quiz" else 0,
+        "quizSuccesses": 1 if command == "quiz" and delta > 0 else 0,
+        "quizFailures": 1 if command == "quiz" and isError else 0,
     }
     _record(values)
 

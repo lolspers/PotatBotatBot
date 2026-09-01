@@ -4,8 +4,8 @@ from time import sleep
 from colorama import Fore, Style
 
 import pbb.globals as g
-import pbb.stats as stats
-from pbb.dashboard import startServer, stopServer
+import pbb.stats.stats as stats
+from pbb.stats.dashboard import startServer, stopServer
 
 try:
     from pbb.classes.user import User

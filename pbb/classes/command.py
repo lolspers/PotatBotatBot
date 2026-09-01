@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 from colorama import Style
 
 import pbb.globals as g
-import pbb.stats as stats
+import pbb.stats.stats as stats
 from pbb.api import potat, twitch
 from pbb.api.exceptions import Unauthorized
 from pbb.classes.userdata import UserData

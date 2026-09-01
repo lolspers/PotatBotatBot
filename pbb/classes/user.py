@@ -5,7 +5,7 @@ from time import sleep, time
 from colorama import Fore
 
 import pbb.globals as g
-import pbb.stats as stats
+import pbb.stats.stats as stats
 from pbb.api import potat, twitch
 from pbb.classes.channel import PotatChannel
 from pbb.classes.commands import Cdr, Commands, Prestige, Quiz, Rankup
@@ -45,10 +45,7 @@ class User(UserData):
 
 
 
-    def setData(self, balanceCommand: str = "rank", responseText: str = "") -> None:
-        g.logger.debug("Setting user data")
-        hadPlayer = bool(stats.playerInfo["username"])
-        balanceBeforeRefresh = int(stats.playerInfo["potatoes"])
+    def getApiData(self) -> dict:
         ok, data = potat.getUser(self.username)
 
         if not ok:
@@ -65,51 +62,66 @@ class User(UserData):
             g.logger.critical(f"No potato data found for user '{self.username}'")
             raise StopBot(f"No potato data found for user '{self.username}'")
 
+        return d
+
+
+    def getPotatoCount(self) -> int:
+        data = self.getApiData()
+        return data["count"]
+
+
+    def setData(self, balanceCommand: str = "rank", responseText: str = "") -> None:
+        g.logger.debug("Setting user data")
+        hadPlayer = bool(stats.playerInfo["username"])
+        balanceBeforeRefresh = int(stats.playerInfo["potatoes"])
+
+        data = self.getApiData()
+
         def getCmdCd(data: dict) -> int:
             return data["readyAt"] // 1000 if data["readyAt"] else 0
 
-        self.joinedAt: str = d["joinedAt"]
-        UserData.prestige = d["prestige"]
-        UserData.rank = d["rank"]
-        UserData.potatoes = d["count"]
-        UserData.taxMultiplier = d["taxMultiplier"]
-        self.verbose: bool = d["verbose"]
+        self.joinedAt: str = data["joinedAt"]
+        UserData.prestige = data["prestige"]
+        UserData.rank = data["rank"]
+        UserData.potatoes = data["count"]
+        UserData.taxMultiplier = data["taxMultiplier"]
+        self.verbose: bool = data["verbose"]
 
-        self.commands.potato.readyAt = getCmdCd(d["potato"])
-        self.commands.potato.ready = d["potato"]["ready"]
-        self.commands.potato.usage = d["potato"]["usage"]
+        self.commands.potato.readyAt = getCmdCd(data["potato"])
+        self.commands.potato.ready = data["potato"]["ready"]
+        self.commands.potato.usage = data["potato"]["usage"]
 
-        self.commands.cdr.readyAt = getCmdCd(d["cdr"])
-        self.commands.cdr.ready = d["cdr"]["ready"]
+        self.commands.cdr.readyAt = getCmdCd(data["cdr"])
+        self.commands.cdr.ready = data["cdr"]["ready"]
 
-        self.commands.trample.readyAt = getCmdCd(d["trample"])
-        self.commands.trample.ready = d["trample"]["ready"]
-        self.commands.trample.usage = d["trample"]["trampleCount"]
-        self.commands.trample.trampledCount = d["trample"]["trampledCount"]
+        self.commands.trample.readyAt = getCmdCd(data["trample"])
+        self.commands.trample.ready = data["trample"]["ready"]
+        self.commands.trample.usage = data["trample"]["trampleCount"]
+        self.commands.trample.trampledCount = data["trample"]["trampledCount"]
 
-        self.commands.steal.readyAt = getCmdCd(d["steal"])
-        self.commands.steal.ready = d["steal"]["ready"]
-        self.commands.steal.usage = d["steal"]["theftCount"]
-        self.commands.steal.stolenCount = d["steal"]["stolenCount"]
+        self.commands.steal.readyAt = getCmdCd(data["steal"])
+        self.commands.steal.ready = data["steal"]["ready"]
+        self.commands.steal.usage = data["steal"]["theftCount"]
+        self.commands.steal.stolenCount = data["steal"]["stolenCount"]
 
-        self.commands.quiz.readyAt = getCmdCd(d["quiz"])
-        self.commands.quiz.ready = d["quiz"]["ready"]
-        self.commands.quiz.attempted = d["quiz"]["attempted"]
-        self.commands.quiz.completed = d["quiz"]["completed"]
+        self.commands.quiz.readyAt = getCmdCd(data["quiz"])
+        self.commands.quiz.ready = data["quiz"]["ready"]
+        self.commands.quiz.attempted = data["quiz"]["attempted"]
+        self.commands.quiz.completed = data["quiz"]["completed"]
 
-        self.commands.eat.readyAt = getCmdCd(d["eat"])
-        self.commands.eat.ready = d["eat"]["ready"]
+        self.commands.eat.readyAt = getCmdCd(data["eat"])
+        self.commands.eat.ready = data["eat"]["ready"]
 
-        self.commands.gamble.wins = d["gamble"]["winCount"]
-        self.commands.gamble.lost = d["gamble"]["loseCount"]
-        self.commands.gamble.earned = d["gamble"]["totalWins"]
-        self.commands.gamble.lost = d["gamble"]["totalLosses"]
+        self.commands.gamble.wins = data["gamble"]["winCount"]
+        self.commands.gamble.lost = data["gamble"]["loseCount"]
+        self.commands.gamble.earned = data["gamble"]["totalWins"]
+        self.commands.gamble.lost = data["gamble"]["totalLosses"]
 
-        self.commands.duel.wins = d["duel"]["winCount"]
-        self.commands.duel.losses = d["duel"]["loseCount"]
-        self.commands.duel.earned = d["duel"]["totalWins"]
-        self.commands.duel.lost = abs(d["duel"]["totalLosses"])
-        self.commands.duel.caughtLosses = d["duel"]["caughtLosses"]
+        self.commands.duel.wins = data["duel"]["winCount"]
+        self.commands.duel.losses = data["duel"]["loseCount"]
+        self.commands.duel.earned = data["duel"]["totalWins"]
+        self.commands.duel.lost = abs(data["duel"]["totalLosses"])
+        self.commands.duel.caughtLosses = data["duel"]["caughtLosses"]
 
         stats.updatePlayer(self)
         if hadPlayer:
@@ -194,7 +206,12 @@ class User(UserData):
                         self.setData(command.trigger, responseText)
 
                     if isinstance(command, Quiz):
-                        self.answerQuiz()
+                        quizResult = self.answerQuiz()
+                        answer, balanceChange = quizResult if quizResult else (None, None)
+
+                        stats.setLastCommand(command.trigger)
+                        stats.recordCommandResult(f"a {answer}" if answer else command.trigger, "",
+                            bool(not balanceChange), balanceChange)
 
                         shopok, shopres = self.commands.shopQuiz._execute()
                         self.commands.shopQuiz.handleResult(shopok, shopres)
@@ -222,8 +239,10 @@ class User(UserData):
 
 
 
-    def answerQuiz(self) -> None:
-        sleep(6)
+    def answerQuiz(self) -> tuple[str, tuple[int, int]] | None:
+        sleep(5)
+
+        balanceBefore = self.getPotatoCount()
 
         ok, res = potat.execute("quiz")
 
@@ -238,7 +257,7 @@ class User(UserData):
             errorMsg = ascii(str(res.get("text", res)))
             g.logger.error(f"Failed to get quiz: {errorMsg}",
                          extra={"data": res})
-            return
+            return None
 
 
         quiz = quiz.removesuffix("(You have five minutes to answer correctly, time starts now!)")
@@ -248,7 +267,7 @@ class User(UserData):
 
         if not answer:
             g.logger.warning(f"Failed to answer quiz: No answer found for quiz: {quiz}")
-            return
+            return None
 
         sleep(6)
 
@@ -261,7 +280,12 @@ class User(UserData):
             errorMsg = ascii(str(res.get("text", res.get("error", res))))
             g.logger.error(f"Failed send quiz answer '{answer}': {errorMsg}",
                          extra={"data": res})
-            return
+            return None
 
-        g.logger.info(f"Answered quiz: {answer}",
+        balanceAfter = self.getPotatoCount()
+        delta = balanceAfter - balanceBefore
+
+        g.logger.info(f"Answered quiz (+{delta}): {answer}",
                       extra={"webhook": True})
+
+        return (answer, (delta, balanceAfter))

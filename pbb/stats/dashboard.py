@@ -7,7 +7,9 @@ from pathlib import Path
 from threading import Thread
 from urllib.parse import parse_qs, urlparse
 
-from pbb import stats
+import regex as re
+
+from pbb.stats import stats
 
 HTML = Path(__file__).with_name("dashboard.html").read_bytes().rstrip(b"\r\n")
 
@@ -53,12 +55,20 @@ class DashboardHandler(BaseHTTPRequestHandler):
             self._sendJson(stats.getStatsPayload())
             return
 
-        if request.path == "/balance-events":
+        if request.path == "/events":
             now = datetime.now(UTC)
             query = parse_qs(request.query)
             fromDate = _isoDate(query.get("from", [None])[0], now - timedelta(days=1))
             toDate = _isoDate(query.get("to", [None])[0], now)
-            self._sendJson({"events": stats.getBalanceEvents(fromDate, toDate)})
+            self._sendJson({"events": stats.getEvents(fromDate, toDate)})
+            return
+
+        eventMatch = re.match(r"^/events/(\d+)$", request.path)
+        if eventMatch:
+            eventId = int(eventMatch.group(1))
+            event = stats.getEvent(eventId)
+            self._sendJson({"event": event} if event else {"error": "event not found"},
+                            status=200 if event else 404)
             return
 
         self._sendJson({"error": "not found"}, 404)

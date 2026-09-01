@@ -15,8 +15,8 @@ indent-style = "space"
 
 
 [tool.ruff.lint.flake8-import-conventions]
-banned-from = ["globals"]
+banned-from = ["pbb.globals"]
 
 [tool.ruff.lint.flake8-import-conventions.extend-aliases]
-"globals" = "g"
+"pbb.globals" = "g"
 "regex" = "re"
