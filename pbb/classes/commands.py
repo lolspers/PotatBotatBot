@@ -41,11 +41,6 @@ class Trample(Command):
 class Cdr(Command):
     def __init__(self) -> None:
         self.trigger: str = "cdr"
-        self.baseCost: int = 15
-
-    @property
-    def cost(self) -> int:
-        return int(self.baseCost * self.rank * (1 + self.prestige * 0.1))
 
 
 class Quiz(Command):
