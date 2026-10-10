@@ -275,7 +275,11 @@ def _record(values: dict[str, int]) -> None:
                       COALESCE(SUM(stealAttempts), 0) AS stealAttempts,
                       COALESCE(SUM(stealSuccesses), 0) AS stealSuccesses,
                       COALESCE(SUM(rankups), 0) AS rankups,
-                      COALESCE(SUM(prestiges), 0) AS prestiges
+                      COALESCE(SUM(prestiges), 0) AS prestiges,
+                      COALESCE(SUM(quizReward), 0) AS quizReward,
+                      COALESCE(SUM(quizAttempts), 0) AS quizAttempts,
+                      COALESCE(SUM(quizSuccesses), 0) AS quizSuccesses,
+                      COALESCE(SUM(quizFailures), 0) AS quizFailures
                     FROM daily WHERE date >= ?
                     """,
                     (_weekStartStr(),),
