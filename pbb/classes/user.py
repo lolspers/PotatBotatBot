@@ -1,3 +1,4 @@
+import contextlib
 import json
 import os
 from time import sleep, time
@@ -207,11 +208,16 @@ class User(UserData):
 
                     if isinstance(command, Quiz):
                         quizResult = self.answerQuiz()
-                        answer, balanceChange = quizResult if quizResult else (None, None)
+                        answer, response, balanceChange = (
+                            quizResult if quizResult else (None, "", None)
+                        )
 
                         stats.setLastCommand(command.trigger)
-                        stats.recordCommandResult(f"a {answer}" if answer else command.trigger, "",
-                            bool(not balanceChange), balanceChange)
+                        stats.recordCommandResult(
+                            command=f"a {answer}" if answer else command.trigger,
+                            responseText=response,
+                            isError=bool(not balanceChange),
+                            balanceChange=balanceChange)
 
                         shopok, shopres = self.commands.shopQuiz._execute()
                         self.commands.shopQuiz.handleResult(shopok, shopres)
@@ -239,7 +245,7 @@ class User(UserData):
 
 
 
-    def answerQuiz(self) -> tuple[str, tuple[int, int]] | None:
+    def answerQuiz(self) -> tuple[str, str, tuple[int, int]] | None:
         sleep(5)
 
         balanceBefore = self.getPotatoCount()
@@ -271,7 +277,8 @@ class User(UserData):
 
         sleep(6)
 
-        if self.commands.quiz.usePotat or firstExecution:
+        usePotat: bool = self.commands.quiz.usePotat or firstExecution
+        if usePotat:
             ok, res = potat.execute(f"a {answer}")
         else:
             ok, res = twitch.send(self.channel.channelId, self.uid, str(answer))
@@ -283,9 +290,16 @@ class User(UserData):
             return None
 
         balanceAfter = self.getPotatoCount()
-        delta = balanceAfter - balanceBefore
+        response: str = res.get("text", "")
 
-        g.logger.info(f"Answered quiz (+{delta}): {answer}",
+        delta: int | None = None
+        if usePotat:
+            with contextlib.suppress(IndexError, ValueError):
+                delta = int(response.split("heres ", 1)[1].split(" ", 1)[0])
+        if delta is None:
+            delta = balanceAfter - balanceBefore
+
+        g.logger.info(f"Answered quiz \"{quiz}\": {answer} (+{delta})",
                       extra={"webhook": True})
 
-        return (answer, (delta, balanceAfter))
+        return (answer, response, (delta, balanceAfter))
