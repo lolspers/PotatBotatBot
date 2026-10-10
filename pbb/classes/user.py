@@ -79,7 +79,7 @@ class User(UserData):
         data = self.getApiData()
 
         def getCmdCd(data: dict) -> int:
-            return data["readyAt"] // 1000 if data["readyAt"] else 0
+            return (data["readyAt"] // 1000) + 1 if data["readyAt"] else 0
 
         self.joinedAt: str = data["joinedAt"]
         UserData.prestige = data["prestige"]
